@@ -4,6 +4,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import { register } from "../db.js"
 
 const registerUser=asyncHandler(async(req,res)=>{
    const {name,username,email,password}=req.body;
@@ -18,13 +19,12 @@ const registerUser=asyncHandler(async(req,res)=>{
     }
 
 
-    //create or upload everything to database
+    const createdUser = await register(username, email, name, password);
+    console.log("CreatedUser : ",  createdUser);
 
-    const createdUser = 0//fetch the user details from database
 
     if(!createdUser){
         throw new ApiError(400, "Something Went Wrong While creating a user")
-
     }
 
     return res
