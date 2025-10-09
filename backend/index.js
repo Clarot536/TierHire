@@ -1,9 +1,17 @@
-const express = require('express');
-const app = express();
-const PORT = 5000;
+import express from 'express';
+import {app} from "./app.js"
+import dotenv from "dotenv"
+dotenv.config({
+    path:'./.env'
+})
 
-app.get('/api', (req, res) => {
-  res.send('Backend is running!');
-});
+//give connection to database from here
 
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+ app.listen(process.env.PORT||8000,()=>{
+        console.log(`Server Connected at port ${process.env.PORT}`);
+
+})
+app.on('error',(e)=>{
+        console.log("Server issue")
+    })
+
