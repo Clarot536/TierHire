@@ -53,7 +53,8 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Instead of an alert, we'll show a message on the UI
-    const res = await axios.post("/users/login", {"credential" : credential, "password" : password});
+    const res = await axios.post("/users/login", {"credential" : credential, "password" : password, role : "CANDIDATE"},  { withCredentials: true });
+    console.log(res.data.data);
     if(res.data.success==true){
       
       navigate("/dashboard");

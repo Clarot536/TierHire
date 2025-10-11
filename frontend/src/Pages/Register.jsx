@@ -14,7 +14,7 @@ export default function Register() {
     username: '',
     email: '',
     password: '',
-    role : "CANDIDATE", 
+    role : "CANDIDATE"
   });
 
   // State to hold validation errors for specific fields
@@ -33,7 +33,7 @@ export default function Register() {
 
     const identifier = setTimeout(async () => {
       try {
-        const res = await axios.post("/users/checkUsername", { username: formData.username });
+        const res = await axios.post("/users/checkUsername");
         if (res.data.exists) {
           setErrors(prev => ({ ...prev, username: 'Username is already taken.' }));
         } else {
