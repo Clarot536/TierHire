@@ -1,19 +1,30 @@
-
 import express from 'express';
-import {app} from "./app.js"
-import dotenv from "dotenv"
-import {query} from './db.js';
-dotenv.config({
-    path:'./.env'
-})
+import dotenv from 'dotenv';
+import { app } from './app.js';
 
-query().then(()=>{console.log("Query successful")})
-        .catch((e)=>{console.log("Failed to Connect DB")});
-//give connection to database from here
 
-app.listen(process.env.PORT||8000,()=>{
-    console.log(`Server Connected at port ${process.env.PORT}`);
-})
-app.on('error',(e)=>{
-        console.log("Server issue")
-    })
+dotenv.config({ path: './.env' });
+
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  try {
+   
+
+    // Start Express server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to connect to DB:', err);
+    process.exit(1); // exit process if DB connection fails
+  }
+};
+
+startServer();
+
+// Optional: handle server errors
+app.on('error', (err) => {
+  console.error('Server error:', err);
+});

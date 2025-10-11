@@ -15,6 +15,7 @@ export default function Register() {
     username: '',
     email: '',
     password: '',
+    
   });
 
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
@@ -37,7 +38,7 @@ export default function Register() {
     
     var res = null;
     try {
-      res = axios.post("http://localhost:5000/user/register", formData);
+      res = axios.post("/users/register", formData);
     } catch(err) {
       console.error("Registration failed:", err);
       setMessage('Registration failed. Please try again.');
