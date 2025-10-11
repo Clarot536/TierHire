@@ -6,6 +6,7 @@ import Login from './Pages/Login';
 import DomainDashboard from './Pages/DomainDashboard';
 import RecruiterRegister from './Pages/RecruiterRegister';
 import RecruiterLogin from './Pages/RecruiterLogin';
+import UpdateDashboard from './Pages/UpdateDashboard';
 import Dashboard from './Pages/Dashboard';
 
 function App() {
@@ -18,7 +19,8 @@ function App() {
           <Route path='domain/dashboard' element={<DomainDashboard/>}/>
           <Route path='r/register' element={<RecruiterRegister/>}/>
           <Route path='r/login' element={<RecruiterLogin/>}/>
-          <Route path='Dashboard' element={<Dashboard/>}/>
+          <Route path='updatedashboard' element={<UpdateDashboard/>}/>
+          <Route path='dashboard' element={<Dashboard/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

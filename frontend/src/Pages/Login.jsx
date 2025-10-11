@@ -361,7 +361,7 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
                 <label className="form-label" htmlFor="email">Email</label>
-                <input id="email" type="email" placeholder="Enter your email" required className="form-input" value={credential} onChange={(e)=>setCredential(e.target.value)}/>
+                <input id="email" type="string" placeholder="Enter your email" required className="form-input" value={credential} onChange={(e)=>setCredential(e.target.value)}/>
               </div>
 
               <div className="form-group">
