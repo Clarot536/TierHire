@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {useNavigate} from 'react-router-dom';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    credential : "", 
-    password : ""
-  });
   // State for managing the current theme ('light' or 'dark')
   const [theme, setTheme] = useState('light');
   // State to manage login messages, replacing the alert()
+
+  const [credential, setCredential] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState('');
   // State for password visibility
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -51,18 +50,18 @@ export default function Login() {
   }, [isPasswordVisible]);
 
   // Handles form submission
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Instead of an alert, we'll show a message on the UI
-    try{
-        const res = await axios.post("/users/login", formData);
-        
-        if(res.data.success == true){
-          setMessage('Login button clicked! (This is a demo)');
-          navigate('/dashboard');
-        }
-    }catch(e){
-      console.error(e, "Login Failed");
+    const res = await axios.post("/users/login", {"credential" : credential, "password" : password, role : "CANDIDATE"},  { withCredentials: true });
+    console.log(res.data.data);
+    if(res.data.success==true){
+      
+      navigate("/dashboard");
+      setMessage('Login button clicked!');
+    }
+    else{
+      setMessage("Error while logging in");
     }
 
     // You could add actual login logic here
@@ -363,7 +362,7 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
                 <label className="form-label" htmlFor="email">Email</label>
-                <input id="email" type="email" placeholder="Enter your email" required value={formData.credential} onChange={(e)=>{setFormData({...formData, credential : e.target.value})}} className="form-input" />
+                <input id="email" type="string" placeholder="Enter your email" required className="form-input" value={credential} onChange={(e)=>setCredential(e.target.value)}/>
               </div>
 
               <div className="form-group">
@@ -374,8 +373,8 @@ export default function Login() {
                     type={isPasswordVisible ? 'text' : 'password'}
                     placeholder="Enter your password"
                     required
-                    value={formData.password} onChange={(e)=>{setFormData({...formData, password : e.target.value})}}
                     className="form-input"
+                     value={password} onChange={(e)=>setPassword(e.target.value)}
                   />
                   <button type="button" onClick={togglePasswordVisibility} className="password-toggle-btn" aria-label="Toggle password visibility">
                     {isPasswordVisible ? (

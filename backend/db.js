@@ -61,18 +61,19 @@ const generateRefreshToken = (user) => {
 };
 
 const generateAccessAndRefreshToken = async (user) => {
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
+  const accessToken =   generateAccessToken(user);
+  const refreshToken =  generateRefreshToken(user);
   await updateRefreshToken(user.id, user.role, refreshToken);
   return { accessToken, refreshToken };
 };
 
 // ✅ --- Update Refresh Token in DB ---
 const updateRefreshToken = async (userId, role, refreshToken) => {
+  // console.log(userId,role,refreshToken)
   const tableName = role === "CANDIDATE" ? "Candidates" : "Recruiters";
   try {
     await client.query(
-      `UPDATE "${tableName}" SET "refreshToken" = $1 WHERE "id" = $2`,
+      `UPDATE "${tableName}" SET "refreshtoken" = $1 WHERE "id" = $2`,
       [refreshToken, userId]
     );
   } catch (err) {
@@ -84,9 +85,21 @@ const updateRefreshToken = async (userId, role, refreshToken) => {
 const getUserById = async (userId) => {
   try {
     const query = `
-      SELECT id, username, email, "fullName", 'CANDIDATE' AS role
+      SELECT id, username, email, "fullName", 'CANDIDATE' AS role,"cvUrl",domain_id 
       FROM "Candidates" WHERE id = $1
-      UNION ALL
+      LIMIT 1;
+    `;
+    const res = await client.query(query, [userId]);
+    return res.rows[0] || null;
+  } catch (err) {
+    console.error("Error fetching user by ID:", err);
+    return null;
+  }
+};
+
+const getRecruiterById=async (userId) => {
+  try {
+    const query = `
       SELECT id, username, email, "fullName", 'RECRUITER' AS role
       FROM "Recruiters" WHERE id = $1
       LIMIT 1;
@@ -150,25 +163,30 @@ const register = async (username, email, fullName, password, role) => {
 const login = async (credential, password) => {
   try {
     const query = `
-      SELECT id, username, email, "passwordHash", "fullName", "refreshToken", 'CANDIDATE' AS role
+      (SELECT id, username, email, "passwordHash", "fullName", "refreshtoken", 'CANDIDATE' AS role
       FROM "Candidates"
       WHERE email = $1 OR username = $1
-      UNION ALL
-      SELECT id, username, email, "passwordHash", "fullName", "refreshToken", 'RECRUITER' AS role
+      )UNION ALL
+      (SELECT id, username, email, "passwordHash", "fullName", "refreshtoken", 'RECRUITER' AS role
       FROM "Recruiters"
-      WHERE email = $1 OR username = $1
-      LIMIT 1;
+      WHERE email = $1 OR username = $1)
+      LIMIT 1
     `;
 
     const res = await client.query(query, [credential]);
     if (res.rows.length === 0) throw new ApiError(404, "User not found");
 
     const user = res.rows[0];
+    console.log(user)
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user);
-
+     let cvUrl=undefined
+    if(user.role==="CANDIDATE"){
+      cvUrl=(await getUserById(user.id)).cvUrl
+    }
+   
     return {
       success: true,
       user: {
@@ -177,6 +195,7 @@ const login = async (credential, password) => {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        cvUrl
       },
       accessToken,
       refreshToken,
@@ -187,11 +206,57 @@ const login = async (credential, password) => {
   }
 };
 
+// ✅ --- resume upload User ---
+const updateCandidateProfile = async ({
+  candidateId,
+  domains,
+  education,
+  experience,
+  projects,
+  skills,
+  cvUrl,
+}) => {
+  try {
+    const query = `UPDATE "Candidates"
+      SET 
+        domain_id = $1,
+        education = $2,
+        experience = $3,
+        projects = $4,
+        skills = $5,
+        "cvUrl" = COALESCE($6, "cvUrl"),
+        "updatedAt" = NOW()
+      WHERE id = $7
+      RETURNING *;
+    `;
+    console.log("in db.js")
+    const values = [
+  domains || [],                        // INT[] column, keep as array of integers
+  JSON.stringify(education || ""),      // JSONB columns must be stringified
+  JSON.stringify(experience || ""),
+  JSON.stringify(projects || ""),
+  JSON.stringify(skills || ""),
+  cvUrl,                                // TEXT
+  candidateId                            // INT
+];
+
+
+    const result = await client.query(query, values);
+
+    if (result.rows.length === 0) return { success: false };
+    return { success: true, data: result.rows[0] };
+  } catch (err) {
+    console.error("❌ DB error updating candidate:", err);
+    return { success: false, error: err.message };
+  }
+};
+
 // ✅ --- Logout User ---
 const logOut = async (userId, role) => {
   await updateRefreshToken(userId, role, null);
   return { success: true, message: "Logged out successfully" };
 };
+
 
 // ✅ --- Export Everything ---
 export {
@@ -203,4 +268,6 @@ export {
   updateRefreshToken,
   checkUsername,
   checkEmail,
+  updateCandidateProfile,
+  getRecruiterById
 };
