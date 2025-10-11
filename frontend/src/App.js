@@ -8,9 +8,11 @@ import RecruiterRegister from './Pages/RecruiterRegister';
 import RecruiterLogin from './Pages/RecruiterLogin';
 import UpdateDashboard from './Pages/UpdateDashboard';
 import Dashboard from './Pages/Dashboard';
+import { ThemeAndAuthProvider } from './ThemeAndAuthContext';
 
 function App() {
   return (
+    <ThemeAndAuthProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout/>}>
@@ -24,6 +26,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </ThemeAndAuthProvider>
   );
 }
 

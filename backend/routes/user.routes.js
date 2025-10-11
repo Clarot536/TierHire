@@ -1,7 +1,7 @@
 import Router from "express"
 import {registerUser,logInUser,logOutUser} from "../controllers/user.controller.js"
 import {upload} from "../middlewares/multer.js"
-import { checkusername, checkemail, updateDetails } from "../controllers/user.controller.js";
+import { checkusername, checkemail, updateDetails, mainDashBoard } from "../controllers/user.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.js"; 
 const router  = Router();
@@ -16,6 +16,7 @@ router.route("/updateDashboard").post(verifyJWT,upload.fields([
         maxCount:1
  
     }]),updateDetails)
+router.route("/mainDashboard").post(verifyJWT,mainDashBoard)    
     
 
 

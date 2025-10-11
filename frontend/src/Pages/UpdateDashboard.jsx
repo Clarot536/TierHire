@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './UpdateDashboard.css';
+import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 
 // --- SVG Icons (No changes needed here) ---
 const SunIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>;
@@ -84,6 +86,7 @@ const InfoSection = ({ icon, title, items, handleAddItem, handleRemoveItem, hand
 };
 
 const UpdateDashboard = () => {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState('dark');
   const domains = ['frontend', 'backend', 'data analyst', 'ML'];
   const candidateName = 'Prahlad';
@@ -169,41 +172,32 @@ const UpdateDashboard = () => {
       alert("Please select at least one domain and upload your CV.");
       return;
     }
-
-    console.log("--- Raw form data state ---", formData);
     
     // --- HOW TO SEND TO BACKEND ---
     // You must use the FormData API to send files.
-    // 1. Create a new FormData object
-    const submissionData = new FormData();
-    
-    // 2. Append the file. The key ('cvFile') is what your backend will use to find the file.
-    submissionData.append('cvFile', formData.cv);
-    
-    // 3. Append other data. It's common to stringify JSON data.
-    submissionData.append('domains', JSON.stringify(formData.domains));
-    submissionData.append('skills', JSON.stringify(formData.skills));
-    submissionData.append('projects', JSON.stringify(formData.projects));
-    submissionData.append('education', JSON.stringify(formData.education));
-    submissionData.append('experience', JSON.stringify(formData.experience));
-    submissionData.append('candidateName', candidateName);
 
     // 4. In a real app, you would send this to your server
-    // For example:
-    // try {
-    //   const response = await fetch('https://your-api.com/upload', {
-    //     method: 'POST',
-    //     body: submissionData,
-    //     // Note: Do NOT set 'Content-Type' header, the browser does it automatically for FormData
-    //   });
-    //   const result = await response.json();
-    //   alert('Successfully submitted!');
-    // } catch (error) {
-    //   console.error('Submission failed:', error);
-    //   alert('Submission failed.');
-    // }
+    const ans = new FormData();
 
-    alert('Application data prepared for submission. Check the console!');
+  // Append the resume file. 'resumeFile' should be a File object from an <input type="file">.
+  ans.append('resume', formData.cv);
+
+  // Append the profile data. The JSON object must be stringified.
+  // For example:
+  const domain_ids = {"frontend" : 1, "backend" : 2, "data analyst" : 3, "ML" : 4}
+  const res_domains = formData.domains.map(domain => domain_ids[domain]);
+  const submission = {domains : res_domains, skills : formData.skills, projects : formData.projects, education : formData.education, experience : formData.experience};
+  ans.append('data', JSON.stringify(submission));
+    console.log(ans)
+    try {
+      const response = await axios.post('/users/updateDashboard', ans, {withCredentials:true});
+      console.log(response);
+      alert('Successfully submitted!');
+      // navigate('/dashboard');
+    } catch (error) {
+      console.log('Submission failed:', error);
+      alert('Submission failed.');
+    }
   };
 
   return (

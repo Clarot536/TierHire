@@ -56,8 +56,10 @@ export default function Login() {
     const res = await axios.post("/users/login", {"credential" : credential, "password" : password, role : "CANDIDATE"},  { withCredentials: true });
     console.log(res.data.data);
     if(res.data.success==true){
-      
+      if(res.data.cvUrl == true)
       navigate("/dashboard");
+      else
+        navigate("/updateDashboard");
       setMessage('Login button clicked!');
     }
     else{

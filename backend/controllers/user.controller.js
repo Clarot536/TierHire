@@ -114,17 +114,17 @@ const checkusername = asyncHandler(async (req, res) => {
 
  const updateDetails = asyncHandler(async (req, res) => {
   const candidateId = req.user.id; // from auth middleware
-    console.log(req)
   try {
     // Parse JSON data from frontend
-    const data = JSON.parse(req.body.data || "{}");
+    const data = req.body || {};
     const { domains, education, experience, projects, skills } = data;
 
     // Handle CV upload if provided
     let cvUrl = null;
-    const localCvPath = req.files?.cv?.[0]?.path;
+    const localCvPath = req.files?.resume?.[0]?.path;
     if (localCvPath) {
       const uploadedCv = await uploadOnCloudinary(localCvPath);
+      console.log("URL : ", uploadedCv.url);
       if (!uploadedCv?.url) throw new ApiError(400, "CV upload failed");
       cvUrl = uploadedCv.url;
     }
@@ -184,4 +184,8 @@ const logOutUser = asyncHandler(async (req, res) => {
 
 })
 
-export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails}
+const mainDashBoard = asyncHandler(async(req,res)=>{
+  
+})
+
+export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard}
