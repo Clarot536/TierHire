@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
+  const navigate = useNavigate();
   // State for managing the current theme ('light' or 'dark')
   const [theme, setTheme] = useState('light');
   // State to manage login messages, replacing the alert()
+
+  const [credential, setCredential] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState('');
   // State for password visibility
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -44,10 +50,19 @@ export default function Login() {
   }, [isPasswordVisible]);
 
   // Handles form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Instead of an alert, we'll show a message on the UI
-    setMessage('Login button clicked! (This is a demo)');
+    const res = await axios.post("/users/login", {"credential" : credential, "password" : password});
+    if(res.data.success==true){
+      
+      navigate("/dashboard");
+      setMessage('Login button clicked!');
+    }
+    else{
+      setMessage("Error while logging in");
+    }
+
     // You could add actual login logic here
   };
 
@@ -346,7 +361,7 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
                 <label className="form-label" htmlFor="email">Email</label>
-                <input id="email" type="email" placeholder="Enter your email" required className="form-input" />
+                <input id="email" type="email" placeholder="Enter your email" required className="form-input" value={credential} onChange={(e)=>setCredential(e.target.value)}/>
               </div>
 
               <div className="form-group">
@@ -358,6 +373,7 @@ export default function Login() {
                     placeholder="Enter your password"
                     required
                     className="form-input"
+                     value={password} onChange={(e)=>setPassword(e.target.value)}
                   />
                   <button type="button" onClick={togglePasswordVisibility} className="password-toggle-btn" aria-label="Toggle password visibility">
                     {isPasswordVisible ? (
