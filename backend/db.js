@@ -277,11 +277,21 @@ const getUser = async (id) => {
 
     // Fetch domain data (this part is correct)
     const domainsQuery = await client.query(`
-        SELECT 
-            d.dmaid, d.name, cdp.tier, cdp.rank, cdp."totalInTier", cdp.progress 
-        FROM "Domains" d
-        JOIN "Candidate_Domain_Performance" cdp ON d.id = cdp.domain_id
-        WHERE cdp.candidate_id = $1
+        SELECT
+    d.domain_id AS id,
+    d.domain_name AS name,
+    t.tier_level AS tier,
+    cdp.current_rank AS rank,
+    t.max_slots AS "totalInTier",
+    0 AS progress -- NOTE: 'progress' is missing from your tables, so we're using a placeholder.
+FROM
+    "Candidate_Domain_Performance" cdp
+JOIN
+    "Domains" d ON cdp.domain_id = d.domain_id
+JOIN
+    "Tiers" t ON cdp.tier_id = t.tier_id
+WHERE
+    cdp.candidate_id = $1;
     `, [id]);
     
     const domains = domainsQuery.rows;
@@ -292,10 +302,10 @@ const getUser = async (id) => {
         bio: res.bio || '',
         
         // Safely parse JSON string fields, defaulting to empty array if null or invalid
-        skills: res.skills ? JSON.parse(res.skills) : [], 
-        experience: res.experience ? JSON.parse(res.experience) : [],
-        projects: res.projects ? JSON.parse(res.projects) : [],
-        education: res.education ? JSON.parse(res.education) : [],
+        skills: res.skills ? res.skills : {}, 
+        experience: res.experience ? res.experience : {},
+        projects: res.projects ? res.projects : {},
+        education: res.education ? res.education : {},
 
         domains: domains,
         status: "ACTIVE",
