@@ -323,6 +323,7 @@ WHERE
     return finalResponse;
 };
 
+const query1 = (text, params) => pool.query(text, params);
 
 // ✅ --- Export Everything ---
 export {
@@ -336,5 +337,9 @@ export {
   checkEmail,
   updateCandidateProfile,
   getRecruiterById,
-  getUser
+  getUser,
+  query1
 };
+
+
+// A helper function to query the database

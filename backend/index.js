@@ -1,30 +1,20 @@
-import express from 'express';
+// --- index.js ---
 import dotenv from 'dotenv';
+dotenv.config();
+
 import { app } from './app.js';
-
-
-dotenv.config({ path: './.env' });
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-   
-
-    // Start Express server
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
-
   } catch (err) {
-    console.error('❌ Failed to connect to DB:', err);
-    process.exit(1); // exit process if DB connection fails
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
   }
 };
 
 startServer();
-
-// Optional: handle server errors
-app.on('error', (err) => {
-  console.error('Server error:', err);
-});
