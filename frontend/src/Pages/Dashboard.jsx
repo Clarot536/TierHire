@@ -1,12 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Make sure to run 'npm install axios'
+import axios from 'axios';
 import './Dashboard.css';
 
-// --- Helper Components for Organization (No changes needed here) ---
+// --- New Theme Toggle Component ---
+const ThemeToggle = ({ theme, toggleTheme }) => (
+  <div className="theme-switch-wrapper">
+    <label className="theme-switch" htmlFor="theme-checkbox">
+      <input
+        type="checkbox"
+        id="theme-checkbox"
+        onChange={toggleTheme}
+        checked={theme === 'dark'}
+      />
+      <div className="slider round">
+        <span className="sun-icon">☀️</span>
+        <span className="moon-icon">🌙</span>
+      </div>
+    </label>
+  </div>
+);
 
-const ProfileHeader = ({ candidate }) => (
+
+// --- Updated ProfileHeader ---
+const ProfileHeader = ({ candidate, theme, toggleTheme }) => (
   <header className="dashboard-header">
-    {/* <img src={candidate.profilePicUrl || '/default-avatar.png'} alt="Profile" className="profile-pic" /> */}
+    <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+    <img src={candidate.profilePicUrl || 'https://i.pravatar.cc/150'} alt="Profile" className="profile-pic" />
     <div className="header-info">
       <h1>Welcome back, {candidate.fullName}!</h1>
       <p>Status: <span className={`status ${candidate.status?.toLowerCase()}`}>{candidate.status}</span></p>
@@ -18,6 +37,7 @@ const ProfileHeader = ({ candidate }) => (
   </header>
 );
 
+// --- TierStatusCard Component ---
 const TierStatusCard = ({ domain }) => (
     <div className="card tier-card">
       <h3>{domain.name}</h3>
@@ -30,6 +50,7 @@ const TierStatusCard = ({ domain }) => (
     </div>
 );
 
+// --- UpcomingEventsCard Component ---
 const UpcomingEventsCard = () => (
     <div className="card">
         <h3>Upcoming Events</h3>
@@ -46,6 +67,7 @@ const UpcomingEventsCard = () => (
     </div>
 );
 
+// --- MockInterviewCard Component ---
 const MockInterviewCard = () => (
     <div className="card cta-card">
         <h3>Mock Interview Hub</h3>
@@ -55,6 +77,7 @@ const MockInterviewCard = () => (
     </div>
 );
 
+// --- DomainNewsCard Component ---
 const DomainNewsCard = ({ news }) => (
     <div className="card">
         <h3>Domain & Tier News</h3>
@@ -69,8 +92,24 @@ const DomainNewsCard = ({ news }) => (
     </div>
 );
 
+
+// --- Updated ProfileDetails ---
 const ProfileDetails = ({ candidate }) => {
     const [activeTab, setActiveTab] = useState('skills');
+
+    const renderList = (items) => {
+        if (Array.isArray(items) && items.length > 0) {
+            return items.map((item, index) => <li key={index}>{item}</li>);
+        }
+        return <li>No items to display.</li>;
+    };
+    
+    const renderSkillsList = (items) => {
+        if (Array.isArray(items) && items.length > 0) {
+            return items.map((item, index) => <li key={index}>{item}</li>);
+        }
+        return <li>No skills added yet.</li>;
+    };
 
     return (
         <div className="card">
@@ -82,16 +121,17 @@ const ProfileDetails = ({ candidate }) => {
                 <button onClick={() => setActiveTab('education')} className={activeTab === 'education' ? 'active' : ''}>Education</button>
             </div>
             <div className="tab-content">
-                {activeTab === 'bio' && <p>{candidate.bio}</p>}
-                {activeTab === 'skills' && <ul className="profile-list skills-list">{candidate.skills.map(s => <li key={s}>{s}</li>)}</ul>}
-                {activeTab === 'experience' && <ul className="profile-list">{candidate.experience.map(e => <li key={e}>{e}</li>)}</ul>}
-                {activeTab === 'projects' && <ul className="profile-list">{candidate.projects.map(p => <li key={p}>{p}</li>)}</ul>}
-                {activeTab === 'education' && <ul className="profile-list">{candidate.education.map(edu => <li key={edu}>{edu}</li>)}</ul>}
+                {activeTab === 'bio' && <p>{candidate.bio || 'No bio available.'}</p>}
+                {activeTab === 'skills' && <ul className="profile-list skills-list">{renderSkillsList(candidate.skills)}</ul>}
+                {activeTab === 'experience' && <ul className="profile-list">{renderList(candidate.experience)}</ul>}
+                {activeTab === 'projects' && <ul className="profile-list">{renderList(candidate.projects)}</ul>}
+                {activeTab === 'education' && <ul className="profile-list">{renderList(candidate.education)}</ul>}
             </div>
         </div>
     );
 };
 
+// --- JourneyTimeline Component ---
 const JourneyTimeline = ({ events }) => (
     <div className="card">
         <h3>Your Journey</h3>
@@ -110,23 +150,25 @@ const JourneyTimeline = ({ events }) => (
 );
 
 // --- Main Dashboard Component ---
-
 function Dashboard() {
   const [candidateData, setCandidateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [theme, setTheme] = useState('light');
+
+  const toggleTheme = () => {
+      setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  useEffect(() => {
+      document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const fetchCandidateData = async () => {
       try {
-        // IMPORTANT: Replace '/api/candidate/me' with your actual API endpoint
-        const response = await axios.get('/users/getData', {withCredentials:true});
-        console.log(response);
-        console.log(response.data);
-
-        
-        // Assuming the API returns data in the same structure as your mockData
-        setCandidateData(response.data);
+        const response = await axios.get('/users/getData', { withCredentials: true });
+        setCandidateData(response.data.data);
       } catch (err) {
         console.error("Failed to fetch candidate data:", err);
         setError("Could not load dashboard data. Please try refreshing the page.");
@@ -136,7 +178,7 @@ function Dashboard() {
     };
 
     fetchCandidateData();
-  }, []); // The empty dependency array ensures this runs only once when the component mounts
+  }, []);
 
   if (loading) {
     return <div className="loading-spinner">Loading Your Dashboard...</div>;
@@ -146,22 +188,21 @@ function Dashboard() {
     return <div className="error-message">{error}</div>;
   }
 
-  // This check prevents errors if the API call succeeds but returns no data
   if (!candidateData) {
     return <div className="error-message">No candidate data found.</div>;
   }
 
   return (
     <main className="dashboard-container">
-      <ProfileHeader candidate={candidateData} />
+      <ProfileHeader candidate={candidateData} theme={theme} toggleTheme={toggleTheme} />
       <div className="dashboard-grid">
         <section className="main-content">
           <h2>Tier Status</h2>
-          {/* <div className="tier-grid">
+          <div className="tier-grid">
             {candidateData.domains.map(domain => (
               <TierStatusCard key={domain.id} domain={domain} />
             ))}
-          </div> */}
+          </div>
           <h2>Profile Summary</h2>
           <ProfileDetails candidate={candidateData} />
           <JourneyTimeline events={candidateData.timelineEvents} />

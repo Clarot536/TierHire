@@ -11,8 +11,8 @@ import Dashboard from './Pages/Dashboard';
 import { ThemeAndAuthProvider } from './ThemeAndAuthContext';
 import CandidateDomainDashboard from './CandidateDomainDashboard';
 // Assuming you have components for these new pages
-// import ExamsPage from './Pages/ExamsPage'; 
-import DsaExam from './DsaExam'; 
+import ExamsPage from './Pages/ExamsPage'; 
+import DsaExam from './Pages/DsaExam'; 
 
 function App() {
   return (
@@ -37,7 +37,7 @@ function App() {
           <Route path='domain/dashboard' element={<DomainDashboard/>}/>
           
           {/* Added New Routes */}
-          {/* <Route path='exams' element={<ExamsPage/>}/>  */}
+          <Route path='exams' element={<ExamsPage/>}/> 
           <Route path='dsa' element={<DsaExam/>}/> 
 
         </Route>
