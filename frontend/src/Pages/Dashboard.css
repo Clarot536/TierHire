@@ -9,13 +9,22 @@
     --border-color: #e0e6ed;
     --status-active-color: #28a745;
     --cta-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --error-color: #dc3545;
 }
 
-.loading-spinner {
+.loading-spinner, .error-message {
     text-align: center;
     padding: 50px;
     font-size: 1.2rem;
     color: var(--text-color);
+}
+
+.error-message {
+    color: var(--error-color);
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    margin: 2rem;
 }
 
 .dashboard-container {

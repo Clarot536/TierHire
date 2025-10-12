@@ -7,7 +7,7 @@ import { ApiError } from "./utils/ApiError.js";
 const client = new Client({
   user: "postgres",
   host: "localhost",
-  database: "project_db",
+  database: "ApexHire",
   password: "123456",
   port: 5432,
 });
@@ -85,7 +85,7 @@ const updateRefreshToken = async (userId, role, refreshToken) => {
 const getUserById = async (userId) => {
   try {
     const query = `
-      SELECT id, username, email, "fullName", 'CANDIDATE' AS role,"cvUrl",domain_id 
+      SELECT id, username, email, "fullName", 'CANDIDATE' AS role,"cvUrl"
       FROM "Candidates" WHERE id = $1
       LIMIT 1;
     `;
@@ -218,31 +218,38 @@ const updateCandidateProfile = async ({
 }) => {
   try {
     const query = `UPDATE "Candidates"
-      SET 
-        domain_id = $1,
-        education = $2,
-        experience = $3,
-        projects = $4,
-        skills = $5,
-        "cvUrl" = COALESCE($6, "cvUrl"),
+      SET
+        education = $1,
+        experience = $2,
+        projects = $3,
+        skills = $4,
+        "cvUrl" = COALESCE($5, "cvUrl"),
         "updatedAt" = NOW()
-      WHERE id = $7
+      WHERE id = $6
       RETURNING *;
     `;
     console.log("in db.js")
     const values = [
-  domains || [],                        // INT[] column, keep as array of integers
-  JSON.stringify(education || ""),      // JSONB columns must be stringified
-  JSON.stringify(experience || ""),
-  JSON.stringify(projects || ""),
-  JSON.stringify(skills || ""),
+  education || {},
+  experience || {},
+  projects || {},
+  skills || {},
   cvUrl,                                // TEXT
   candidateId                            // INT
 ];
 
 
     const result = await client.query(query, values);
-
+    console.log(domains)
+    for (const domain of domains) {
+      const res = await client.query(`select * from "Candidate_Domain_Performance" where candidate_id = $1 AND domain_id = $2`, [candidateId, domain]);
+      if(res.rows.length==0)
+    await client.query(
+      `INSERT INTO "Candidate_Domain_Performance" (candidate_id, domain_id) 
+      VALUES($1, $2)`,
+      [candidateId, domain]
+    );
+  }
     if (result.rows.length === 0) return { success: false };
     return { success: true, data: result.rows[0] };
   } catch (err) {
@@ -257,6 +264,55 @@ const logOut = async (userId, role) => {
   return { success: true, message: "Logged out successfully" };
 };
 
+const getUser = async (id) => {
+    // 1. Get the main candidate details
+    let candidateQuery = await client.query(`SELECT * FROM "Candidates" WHERE id = $1`, [id]);
+    
+    // Check if candidate exists
+    if (candidateQuery.rows.length === 0) {
+        return null;
+    }
+    
+    let res = candidateQuery.rows[0];
+
+    // Fetch domain data (this part is correct)
+    const domainsQuery = await client.query(`
+        SELECT 
+            d.dmaid, d.name, cdp.tier, cdp.rank, cdp."totalInTier", cdp.progress 
+        FROM "Domains" d
+        JOIN "Candidate_Domain_Performance" cdp ON d.id = cdp.domain_id
+        WHERE cdp.candidate_id = $1
+    `, [id]);
+    
+    const domains = domainsQuery.rows;
+
+    // --- ✅ FIX: Parse JSON strings from the database into actual arrays/objects ---
+    const finalResponse = {
+        fullName: res.fullName || 'N/A',
+        bio: res.bio || '',
+        
+        // Safely parse JSON string fields, defaulting to empty array if null or invalid
+        skills: res.skills ? JSON.parse(res.skills) : [], 
+        experience: res.experience ? JSON.parse(res.experience) : [],
+        projects: res.projects ? JSON.parse(res.projects) : [],
+        education: res.education ? JSON.parse(res.education) : [],
+
+        domains: domains,
+        status: "ACTIVE",
+        profilePicUrl: res.profilePicUrl || null,
+        domainNews: [], // Default empty array
+        timelineEvents: [
+            {
+                id: 1,
+                date: "2025-10-12T00:00:00Z",
+                description: "Joined the platform."
+            }
+        ]
+    };
+    
+    return finalResponse;
+};
+
 
 // ✅ --- Export Everything ---
 export {
@@ -269,5 +325,6 @@ export {
   checkUsername,
   checkEmail,
   updateCandidateProfile,
-  getRecruiterById
+  getRecruiterById,
+  getUser
 };

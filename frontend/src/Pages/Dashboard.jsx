@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // Make sure to run 'npm install axios'
 import './Dashboard.css';
 
-// --- Helper Components for Organization ---
+// --- Helper Components for Organization (No changes needed here) ---
 
 const ProfileHeader = ({ candidate }) => (
   <header className="dashboard-header">
-    <img src={candidate.profilePicUrl || '/default-avatar.png'} alt="Profile" className="profile-pic" />
+    {/* <img src={candidate.profilePicUrl || '/default-avatar.png'} alt="Profile" className="profile-pic" /> */}
     <div className="header-info">
       <h1>Welcome back, {candidate.fullName}!</h1>
       <p>Status: <span className={`status ${candidate.status?.toLowerCase()}`}>{candidate.status}</span></p>
@@ -113,45 +114,41 @@ const JourneyTimeline = ({ events }) => (
 function Dashboard() {
   const [candidateData, setCandidateData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate fetching data from your backend API
-    const fetchCandidateData = () => {
-      const mockData = {
-        fullName: 'Priya Sharma',
-        status: 'ACTIVE',
-        profilePicUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-        domains: [
-          { id: 1, name: 'Frontend Development', tier: 1, rank: 22, totalInTier: 120, progress: 85 },
-          { id: 2, name: 'UI/UX Design', tier: 2, rank: 45, totalInTier: 200, progress: 70 },
-        ],
-        domainNews: [
-            {id: 1, title: "Recruiter Alert", body: "TechCorp is now actively scouting Tier 1 Frontend developers.", timestamp: "2025-10-10T10:00:00Z"},
-            {id: 2, title: "Skill Demand", body: "Demand for Figma skills in Tier 2 has increased by 15% this month.", timestamp: "2025-10-08T14:30:00Z"},
-        ],
-        bio: "Creative frontend developer with a passion for building intuitive and beautiful user interfaces. Proficient in modern JavaScript frameworks and design principles.",
-        skills: ["React", "TypeScript", "Next.js", "GraphQL", "Figma", "CSS-in-JS"],
-        experience: ["Frontend Developer at Digital Wave (2023-Present)", "Junior Web Developer at Creative Solutions (2021-2023)"],
-        projects: ["Portfolio Website with Next.js", "E-commerce UI Kit"],
-        education: ["B.Sc. in Information Technology - Osmania University"],
-        timelineEvents: [
-            {id: 1, date: "2025-08-15T00:00:00Z", description: "Promoted to Tier 1 in Frontend Development! 🚀"},
-            {id: 2, date: "2025-06-01T00:00:00Z", description: "Achieved top 10% score in the Q2 Shifting Test."},
-            {id: 3, date: "2025-02-20T00:00:00Z", description: "Joined the platform and placed in Tier 2."},
-        ]
-      };
+    const fetchCandidateData = async () => {
+      try {
+        // IMPORTANT: Replace '/api/candidate/me' with your actual API endpoint
+        const response = await axios.get('/users/getData', {withCredentials:true});
+        console.log(response);
+        console.log(response.data);
 
-      setTimeout(() => {
-        setCandidateData(mockData);
+        
+        // Assuming the API returns data in the same structure as your mockData
+        setCandidateData(response.data);
+      } catch (err) {
+        console.error("Failed to fetch candidate data:", err);
+        setError("Could not load dashboard data. Please try refreshing the page.");
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchCandidateData();
-  }, []);
+  }, []); // The empty dependency array ensures this runs only once when the component mounts
 
   if (loading) {
     return <div className="loading-spinner">Loading Your Dashboard...</div>;
+  }
+  
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
+  // This check prevents errors if the API call succeeds but returns no data
+  if (!candidateData) {
+    return <div className="error-message">No candidate data found.</div>;
   }
 
   return (
@@ -160,11 +157,11 @@ function Dashboard() {
       <div className="dashboard-grid">
         <section className="main-content">
           <h2>Tier Status</h2>
-          <div className="tier-grid">
+          {/* <div className="tier-grid">
             {candidateData.domains.map(domain => (
               <TierStatusCard key={domain.id} domain={domain} />
             ))}
-          </div>
+          </div> */}
           <h2>Profile Summary</h2>
           <ProfileDetails candidate={candidateData} />
           <JourneyTimeline events={candidateData.timelineEvents} />

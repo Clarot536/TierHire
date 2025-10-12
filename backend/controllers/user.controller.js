@@ -4,7 +4,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { register, login, getUserById,updateRefreshToken,checkEmail,checkUsername,updateCandidateProfile,getRecruiterById} from "../db.js"
+import { register, login, getUserById,updateRefreshToken,checkEmail,checkUsername,updateCandidateProfile,getRecruiterById, getUser} from "../db.js"
 
 
 
@@ -117,18 +117,18 @@ const checkusername = asyncHandler(async (req, res) => {
   try {
     // Parse JSON data from frontend
     const data = req.body || {};
-    const { domains, education, experience, projects, skills } = data;
+    console.log("Data : ", data);
+    const { domains, education, experience, projects, skills } = JSON.parse(data.data);
 
     // Handle CV upload if provided
-    let cvUrl = null;
-    const localCvPath = req.files?.resume?.[0]?.path;
-    if (localCvPath) {
-      const uploadedCv = await uploadOnCloudinary(localCvPath);
-      console.log("URL : ", uploadedCv.url);
-      if (!uploadedCv?.url) throw new ApiError(400, "CV upload failed");
-      cvUrl = uploadedCv.url;
-    }
-
+    let cvUrl = 100;
+    // const localCvPath = req.files?.resume?.[0]?.path;
+    // if (localCvPath) {
+    //   const uploadedCv = await uploadOnCloudinary(localCvPath);
+    //   console.log("URL : ", uploadedCv.url);
+    //   if (!uploadedCv?.url) throw new ApiError(400, "CV upload failed");
+    //   cvUrl = uploadedCv.url;
+    // }
     // Update in DB
     const updateResult = await updateCandidateProfile({
       candidateId,
@@ -145,13 +145,13 @@ const checkusername = asyncHandler(async (req, res) => {
     }
 
     const updatedCandidate = updateResult.data;
-
+    console.log(updatedCandidate.experience)
     // Parse JSON fields before sending response
     updatedCandidate.domains = JSON.parse(updatedCandidate.domains || "[]");
-    updatedCandidate.education = JSON.parse(updatedCandidate.education || "[]");
-    updatedCandidate.experience = JSON.parse(updatedCandidate.experience || "[]");
-    updatedCandidate.projects = JSON.parse(updatedCandidate.projects || "[]");
-    updatedCandidate.skills = JSON.parse(updatedCandidate.skills || "[]");
+    updatedCandidate.education = updatedCandidate.education || {};
+    updatedCandidate.experience = updatedCandidate.experience || {};
+    updatedCandidate.projects = updatedCandidate.projects || {};
+    updatedCandidate.skills = updatedCandidate.skills || {};
 
     res.status(200).json({
       success: true,
@@ -180,12 +180,38 @@ const logOutUser = asyncHandler(async (req, res) => {
            .clearCookie("accessToken",options)
            .clearCookie("refreshToken",options)
            .json(new ApiResponse(200,"User logged Out Successfully"))
-
-
 })
 
 const mainDashBoard = asyncHandler(async(req,res)=>{
   
 })
 
-export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard}
+const getData = asyncHandler(async (req, res) => {
+    try {
+        // ❌ WRONG: Don't get id from body on a GET request.
+        // const { id } = req.body; 
+
+        // ✅ CORRECT: Get the authenticated user's ID from the verifyJWT middleware.
+        const id = req.user?.id;
+
+        if (!id) {
+            throw new ApiError(401, "User not authenticated or ID is missing");
+        }
+
+        const result = await getUser(id);
+
+        if (!result) {
+            throw new ApiError(404, "Candidate data not found");
+        }
+        
+        // The result is already a complete JSON object from getUser
+        return res.status(200).json(new ApiResponse(200, result, "Candidate data fetched successfully"));
+
+    } catch (e) {
+        console.error("Error in getData controller:", e);
+        // Pass the error to the asyncHandler's error handler
+        throw new ApiError(e.statusCode || 500, e.message || "Failed to get user data");
+    }
+});
+
+export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard, getData}

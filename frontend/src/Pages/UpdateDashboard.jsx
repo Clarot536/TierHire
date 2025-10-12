@@ -188,12 +188,10 @@ const UpdateDashboard = () => {
   const res_domains = formData.domains.map(domain => domain_ids[domain]);
   const submission = {domains : res_domains, skills : formData.skills, projects : formData.projects, education : formData.education, experience : formData.experience};
   ans.append('data', JSON.stringify(submission));
-    console.log(ans)
     try {
       const response = await axios.post('/users/updateDashboard', ans, {withCredentials:true});
-      console.log(response);
       alert('Successfully submitted!');
-      // navigate('/dashboard');
+      navigate('/dashboard');
     } catch (error) {
       console.log('Submission failed:', error);
       alert('Submission failed.');
