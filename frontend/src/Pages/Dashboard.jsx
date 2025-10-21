@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react'; // 1. Import useRef
+import api from '../axiosConfig';
 import './Dashboard.css';
 
-// --- New Theme Toggle Component ---
+// --- (All sub-components like ThemeToggle, ProfileHeader, etc. remain the same) ---
 const ThemeToggle = ({ theme, toggleTheme }) => (
   <div className="theme-switch-wrapper">
     <label className="theme-switch" htmlFor="theme-checkbox">
@@ -20,8 +20,6 @@ const ThemeToggle = ({ theme, toggleTheme }) => (
   </div>
 );
 
-
-// --- Updated ProfileHeader ---
 const ProfileHeader = ({ candidate, theme, toggleTheme }) => (
   <header className="dashboard-header">
     <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
@@ -37,7 +35,6 @@ const ProfileHeader = ({ candidate, theme, toggleTheme }) => (
   </header>
 );
 
-// --- TierStatusCard Component ---
 const TierStatusCard = ({ domain }) => (
     <div className="card tier-card">
       <h3>{domain.name}</h3>
@@ -50,7 +47,6 @@ const TierStatusCard = ({ domain }) => (
     </div>
 );
 
-// --- UpcomingEventsCard Component ---
 const UpcomingEventsCard = () => (
     <div className="card">
         <h3>Upcoming Events</h3>
@@ -67,7 +63,6 @@ const UpcomingEventsCard = () => (
     </div>
 );
 
-// --- MockInterviewCard Component ---
 const MockInterviewCard = () => (
     <div className="card cta-card">
         <h3>Mock Interview Hub</h3>
@@ -77,7 +72,6 @@ const MockInterviewCard = () => (
     </div>
 );
 
-// --- DomainNewsCard Component ---
 const DomainNewsCard = ({ news }) => (
     <div className="card">
         <h3>Domain & Tier News</h3>
@@ -92,25 +86,24 @@ const DomainNewsCard = ({ news }) => (
     </div>
 );
 
-
-// --- Updated ProfileDetails ---
 const ProfileDetails = ({ candidate }) => {
     const [activeTab, setActiveTab] = useState('skills');
-
     const renderList = (items) => {
         if (Array.isArray(items) && items.length > 0) {
-            return items.map((item, index) => <li key={index}>{item}</li>);
+            return items.map((item, index) => (
+                <li key={index}>{item.name || item.role || item.title || item.degree || JSON.stringify(item)}</li>
+            ));
         }
         return <li>No items to display.</li>;
     };
-    
     const renderSkillsList = (items) => {
         if (Array.isArray(items) && items.length > 0) {
-            return items.map((item, index) => <li key={index}>{item}</li>);
+            return items.map((item, index) => (
+                <li key={index}>{item.name || JSON.stringify(item)}</li>
+            ));
         }
         return <li>No skills added yet.</li>;
     };
-
     return (
         <div className="card">
             <div className="tabs">
@@ -131,7 +124,6 @@ const ProfileDetails = ({ candidate }) => {
     );
 };
 
-// --- JourneyTimeline Component ---
 const JourneyTimeline = ({ events }) => (
     <div className="card">
         <h3>Your Journey</h3>
@@ -149,25 +141,30 @@ const JourneyTimeline = ({ events }) => (
     </div>
 );
 
+
 // --- Main Dashboard Component ---
 function Dashboard() {
   const [candidateData, setCandidateData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState('light');
+  const dashboardRef = useRef(null); // 2. Create the ref
 
   const toggleTheme = () => {
       setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
   useEffect(() => {
-      document.documentElement.setAttribute('data-theme', theme);
+    // 3. Apply the theme to the component's main element using the ref
+    if (dashboardRef.current) {
+        dashboardRef.current.setAttribute('data-theme', theme);
+    }
   }, [theme]);
 
   useEffect(() => {
     const fetchCandidateData = async () => {
       try {
-        const response = await axios.get('/users/getData', { withCredentials: true });
+        const response = await api.get('/api/users/getData');
         setCandidateData(response.data.data);
       } catch (err) {
         console.error("Failed to fetch candidate data:", err);
@@ -192,8 +189,9 @@ function Dashboard() {
     return <div className="error-message">No candidate data found.</div>;
   }
 
+  // 4. Attach the ref to the main element here
   return (
-    <main className="dashboard-container">
+    <main ref={dashboardRef} className="dashboard-container">
       <ProfileHeader candidate={candidateData} theme={theme} toggleTheme={toggleTheme} />
       <div className="dashboard-grid">
         <section className="main-content">

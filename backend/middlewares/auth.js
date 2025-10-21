@@ -1,35 +1,40 @@
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getUserById } from "../db.js"; // You'll need this to get the full user
+// ✅ Import BOTH functions to find users
+import { getUserById, getRecruiterById } from "../db.js"; 
 
 const verifyJWT = asyncHandler(async (req, _, next) => {
     try {
-        // Get the token from the cookies sent by the browser
-        const token = req.cookies?.accessToken;
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
             throw new ApiError(401, "Unauthorized request: No token provided");
         }
 
-        // Verify the token using your secret key
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-        // Fetch the user from the database using the ID from the token
-        const user = await getUserById(decodedToken?.userId);
+        // ✅ --- THIS IS THE CORE FIX ---
+        // Check the role from the token and fetch from the correct table.
+        let user;
+        if (decodedToken.role === 'RECRUITER') {
+            user = await getRecruiterById(decodedToken?.userId);
+        } else if (decodedToken.role === 'CANDIDATE') {
+            user = await getUserById(decodedToken?.userId);
+        } else {
+             // If the role is missing or invalid
+            throw new ApiError(401, "Invalid token: User role is not specified.");
+        }
 
         if (!user) {
-            // This handles cases where the user might have been deleted but the token still exists
             throw new ApiError(401, "Invalid Access Token: User not found");
         }
 
-        // IMPORTANT: Attach the full user object to the request
+        // Attach the found user (either candidate or recruiter) to the request object
         req.user = user;
-        console.log("User ", req.user);
-        next(); // Proceed to the next middleware or controller
+        next();
 
     } catch (error) {
-        // Catches errors from jwt.verify (e.g., expired token, invalid signature)
         throw new ApiError(401, error?.message || "Invalid Access Token");
     }
 });

@@ -9,8 +9,15 @@
   --border-color: #d0d7de;
   --status-active-color: #2da44e;
   --cta-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --error-color: #dc3545;
   --skill-bg-color: #e9f2fe;
+  --error-color: #b91c1c;
+  --error-background-color: #fee2e2;
+  --error-border-color: #fca5a5;
+  --slider-background-color: #ccc;
+  --cta-button-background-color: rgba(255, 255, 255, 0.9);
+  --cta-button-hover-background-color: #ffffff;
+  --primary-button-text-color: #ffffff;
+  --skill-text-color: var(--primary-color);
 }
 
 .dashboard-container[data-theme='dark'] {
@@ -23,6 +30,14 @@
   --border-color: #30363d;
   --status-active-color: #3fb950;
   --skill-bg-color: #1f6feb;
+  --error-color: #fca5a5;
+  --error-background-color: #3f1212;
+  --error-border-color: #5b2121;
+  --slider-background-color: #30363d;
+  --cta-button-background-color: rgba(255, 255, 255, 0.1);
+  --cta-button-hover-background-color: rgba(255, 255, 255, 0.2);
+  --primary-button-text-color: #ffffff;
+  --skill-text-color: #ffffff;
 }
 
 /* --- Base Dashboard Styles --- */
@@ -35,8 +50,8 @@
 
 .error-message {
   color: var(--error-color);
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background-color: var(--error-background-color);
+  border: 1px solid var(--error-border-color);
   border-radius: 8px;
   margin: 2rem;
 }
@@ -66,7 +81,7 @@
   height: 0;
 }
 .slider {
-  background-color: #ccc;
+  background-color: var(--slider-background-color);
   bottom: 0;
   cursor: pointer;
   left: 0;
@@ -84,7 +99,7 @@
 }
 .slider.round:before {
   border-radius: 50%;
-  background-color: white;
+  background-color: white; /* White handle works for both themes */
   content: "";
   height: 26px;
   left: 4px;
@@ -203,9 +218,14 @@ input:checked + .slider .moon-icon { opacity: 1; }
 .profile-list { padding-left: 1.2rem; list-style-type: '✓  '; }
 .profile-list li { margin-bottom: 0.5rem; padding-left: 0.5rem; }
 .skills-list { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; list-style: none; }
-.skills-list li { background-color: var(--skill-bg-color); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.9rem; font-weight: 500; }
-
-.dashboard-container[data-theme='dark'] .skills-list li { color: #fff; }
+.skills-list li {
+  background-color: var(--skill-bg-color);
+  color: var(--skill-text-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
 
 /* --- Journey Timeline --- */
 .timeline { position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); }
@@ -230,21 +250,28 @@ input:checked + .slider .moon-icon { opacity: 1; }
 .event .countdown { font-size: 1.1rem; color: var(--primary-color); font-weight: bold; }
 
 /* CTA Card */
-.cta-card { background: var(--cta-background); color: white; }
-.cta-card h3 { color: white; }
+.cta-card {
+  background: var(--cta-background);
+  color: var(--primary-button-text-color);
+}
+.cta-card h3 {
+  color: var(--primary-button-text-color);
+}
 .cta-button {
   width: 100%;
   padding: 0.75rem;
   border: none;
   border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--cta-button-background-color);
   color: var(--primary-hover-color);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
 }
-.cta-button:hover { background-color: white; }
+.cta-button:hover {
+  background-color: var(--cta-button-hover-background-color);
+}
 
 /* News Feed */
 .news-feed { list-style: none; padding: 0; margin: 0; }
@@ -254,10 +281,22 @@ input:checked + .slider .moon-icon { opacity: 1; }
 
 /* --- General Buttons --- */
 button { font-size: 0.9rem; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; border: 1px solid var(--primary-color); transition: all 0.2s; font-weight: 500; }
-.header-actions button { background-color: var(--primary-color); color: white; }
-.header-actions button:hover { background-color: var(--primary-hover-color); border-color: var(--primary-hover-color); }
-.participate-btn { background-color: transparent; color: var(--primary-color); }
-.participate-btn:hover { background-color: var(--primary-color); color: white; }
+.header-actions button {
+  background-color: var(--primary-color);
+  color: var(--primary-button-text-color);
+}
+.header-actions button:hover {
+  background-color: var(--primary-hover-color);
+  border-color: var(--primary-hover-color);
+}
+.participate-btn {
+  background-color: transparent;
+  color: var(--primary-color);
+}
+.participate-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--primary-button-text-color);
+}
 
 /* --- Responsive Design --- */
 @media (max-width: 1200px) {

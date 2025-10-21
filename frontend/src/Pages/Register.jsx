@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from "axios";
+import api from "../axiosConfig";
 import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
@@ -33,8 +33,8 @@ export default function Register() {
 
     const identifier = setTimeout(async () => {
       try {
-        const res = await axios.post("/users/checkUsername");
-        if (res.data.exists) {
+        const res = await api.post("/api/users/checkUsername", { username: formData.username });
+        if (res.data.user) {
           setErrors(prev => ({ ...prev, username: 'Username is already taken.' }));
         } else {
           setErrors(prev => ({ ...prev, username: '' }));
@@ -57,8 +57,8 @@ export default function Register() {
 
     const identifier = setTimeout(async () => {
       try {
-        const res = await axios.post("/users/checkEmail", { email: formData.email });
-        if (res.data.exists) {
+        const res = await api.post("/api/users/checkEmail", { email: formData.email });
+        if (res.data.user) {
           setErrors(prev => ({ ...prev, email: 'This email is already registered.' }));
         } else {
           setErrors(prev => ({ ...prev, email: '' }));
@@ -101,13 +101,11 @@ export default function Register() {
     
     var res = null;
     try {
-      res = await axios.post("/users/register", formData, {withCredentials : true});
+      res = await api.post("/api/users/register", formData);
       if(res.data.success)
         navigate('/login');
-      if(!res.data.success && res.data.username)
-        setMessage("Username already taken")
-      if(!res.data.success && res.data.email)
-        setMessage("Email already registered")
+      else
+        setMessage("Registration failed. Please try again.")
     } catch(err) {
       console.error("Registration failed:", err);
       setMessage('Registration failed. Please try again.');

@@ -4,13 +4,13 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { register, login, getUserById,updateRefreshToken,checkEmail,checkUsername,updateCandidateProfile,getRecruiterById, getUser} from "../db.js"
+import { register, login, getUserById,updateRefreshToken,checkEmail,checkUsername,updateCandidateProfile,getRecruiterById, getUser,logOut, getRecUser} from "../db.js"
 
 
 
 const registerUser = asyncHandler(async (req, res) => {
 
-    const { name, username, email, password,role   } = req.body;
+    const { name, username, email, password,role, companyname } = req.body;
     if ([name, username, email, password,role].some((field) => field?.trim() == "")) {
         throw new ApiError(404, "All Fields are required");
     }
@@ -20,8 +20,8 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "User Already Exists");
     }
 
-
-    const createdUser = await register(username, email, name, password,role);
+    console.log("Company ", companyname);
+    const createdUser = await register(username, email, name, password, role, companyname);
 
     if (createdUser) {
         console.log("User Created ");
@@ -44,14 +44,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const logInUser = asyncHandler(async (req, res) => {
 
-    const { credential, password,role } = req.body
-
-    if ([credential, password].some((fields) => fields.trim() === "")) {
-        throw new ApiError(400, "All Fields Must Be Entered")
-    }
-    const existedUser = await login(credential, password);
+    const { email, password,role } = req.body
+    const existedUser = await login(email, password);
    
-    console.log(existedUser)
     if (!existedUser?.user.id) {
         console.log("User not created")
         throw new ApiError(400, "User doesnot  exisits")
@@ -70,18 +65,18 @@ const logInUser = asyncHandler(async (req, res) => {
     // }
     // const resumeUploadStatus=await uploadResume(resumeUploaded,existedUser?.user.id,role);
     let LoggedInUser=null
+    console.log(role);
     if(role==="CANDIDATE"){
         LoggedInUser = await getUserById(existedUser.user.id);
     }else if(role==="RECRUITER"){
          LoggedInUser = await getRecruiterById(existedUser.user.id);
     }
-    console.log(LoggedInUser)
 
     const options = {
         httpOnly: true,
         secure: true
     }
-    
+    console.log("Logged in ", LoggedInUser);
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -117,7 +112,6 @@ const checkusername = asyncHandler(async (req, res) => {
   try {
     // Parse JSON data from frontend
     const data = req.body || {};
-    console.log("Data : ", data);
     const { domains, education, experience, projects, skills } = JSON.parse(data.data);
 
     // Handle CV upload if provided
@@ -125,10 +119,10 @@ const checkusername = asyncHandler(async (req, res) => {
     // const localCvPath = req.files?.resume?.[0]?.path;
     // if (localCvPath) {
     //   const uploadedCv = await uploadOnCloudinary(localCvPath);
-    //   console.log("URL : ", uploadedCv.url);
     //   if (!uploadedCv?.url) throw new ApiError(400, "CV upload failed");
     //   cvUrl = uploadedCv.url;
     // }
+
     // Update in DB
     const updateResult = await updateCandidateProfile({
       candidateId,
@@ -145,7 +139,7 @@ const checkusername = asyncHandler(async (req, res) => {
     }
 
     const updatedCandidate = updateResult.data;
-    console.log(updatedCandidate.experience)
+    console.log(updatedCandidate)
     // Parse JSON fields before sending response
     updatedCandidate.domains = JSON.parse(updatedCandidate.domains || "[]");
     updatedCandidate.education = updatedCandidate.education || {};
@@ -165,11 +159,9 @@ const checkusername = asyncHandler(async (req, res) => {
 });
 
 
-
-
 const logOutUser = asyncHandler(async (req, res) => {
         const userId=req.user.id
-        const UpdateUser=await updateRefreshToken(userId,null)
+        const UpdateUser=await updateRefreshToken(userId,'Candidate',null)
 
     const options={
         httpOnly:true,
@@ -183,8 +175,61 @@ const logOutUser = asyncHandler(async (req, res) => {
 })
 
 const mainDashBoard = asyncHandler(async(req,res)=>{
-  
+   try {
+    const { userId } = req.user;
+
+    const candidate = await getCandidateMainDashBoardById(userId);
+    if (!candidate) {
+      return res.status(404).json({ success: false, message: "Candidate not found" });
+    }
+
+    // remove sensitive fields (extra safety)
+    const { passwordHash, refreshToken, ...safeCandidate } = candidate;
+
+    return res.status(200).json({
+      success: true,
+      message: "Candidate profile fetched successfully",
+      data: safeCandidate,
+    });
+  } catch (error) {
+    console.error("Error fetching candidate:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
 })
+
+
+const getRecData = asyncHandler(async (req, res) => {
+    try {
+      console.log("Hiiiii");
+        const id = req.user?.id;
+
+        if (!id) {
+            throw new ApiError(401, "User not authenticated or ID is missing");
+        }
+
+        const result = await getRecUser(id);
+
+        if (!result) {
+            throw new ApiError(404, "Recruiter data not found");
+        }
+        
+        // The result is already a complete JSON object from getUser
+        return res.status(200).json(new ApiResponse(200, result, "Recruiter data fetched successfully"));
+
+    } catch (e) {
+        console.error("Error in getData controller:", e);
+        // Pass the error to the asyncHandler's error handler
+        throw new ApiError(e.statusCode || 500, e.message || "Failed to get user data");
+    }
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    // The verifyJWT middleware has already found the user (candidate or recruiter)
+    // and attached them to the request object. We just return it here.
+    return res
+        .status(200)
+        .json(new ApiResponse(200, req.user, "User data fetched successfully"));
+});
 
 const getData = asyncHandler(async (req, res) => {
     try {
@@ -214,4 +259,4 @@ const getData = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard, getData}
+export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard, getData, getRecData, getCurrentUser }

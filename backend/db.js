@@ -113,7 +113,7 @@ const getRecruiterById=async (userId) => {
 };
 
 // ✅ --- Register User ---
-const register = async (username, email, fullName, password, role) => {
+const register = async (username, email, fullName, password, role, company) => {
   const allowedTables = {
     CANDIDATE: "Candidates",
     RECRUITER: "Recruiters",
@@ -137,7 +137,6 @@ const register = async (username, email, fullName, password, role) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, username, email, "fullName";
     `;
-
     const res = await client.query(insertQuery, [
       username,
       email,
@@ -147,8 +146,11 @@ const register = async (username, email, fullName, password, role) => {
       now,
     ]);
 
-    const newUser = res.rows[0];
-    newUser.role = role.toUpperCase();
+const newUser = res.rows[0];
+const rec_id = newUser.id;
+newUser.role = role.toUpperCase();
+if(role=="RECRUITER")
+  company = await client.query(`insert into "Companies" (recruiter_id, company_name) values($1, $2)`, [rec_id, company]);
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(newUser);
 
@@ -174,7 +176,8 @@ const login = async (credential, password) => {
     `;
 
     const res = await client.query(query, [credential]);
-    if (res.rows.length === 0) throw new ApiError(404, "User not found");
+    console.log(res.rows)
+    if (res.rows.length === 0) throw new ApiError(401, "User not found");
 
     const user = res.rows[0];
     console.log(user)
@@ -186,17 +189,17 @@ const login = async (credential, password) => {
     if(user.role==="CANDIDATE"){
       cvUrl=(await getUserById(user.id)).cvUrl
     }
-   
-    return {
-      success: true,
-      user: {
+   const userobj = {
         id: user.id,
         username: user.username,
         email: user.email,
         fullName: user.fullName,
         role: user.role,
         cvUrl
-      },
+      };
+    return {
+      success: true,
+      user: userobj,
       accessToken,
       refreshToken,
     };
@@ -228,15 +231,18 @@ const updateCandidateProfile = async ({
       WHERE id = $6
       RETURNING *;
     `;
-    console.log("in db.js")
+   
+    
+
+
     const values = [
-  education || {},
-  experience || {},
-  projects || {},
-  skills || {},
-  cvUrl,                                // TEXT
-  candidateId                            // INT
-];
+      JSON.stringify(education || []),
+      JSON.stringify(experience || []),
+      JSON.stringify(projects || []),
+      JSON.stringify(skills || []),
+      cvUrl,
+      candidateId,
+    ];
 
 
     const result = await client.query(query, values);
@@ -323,11 +329,118 @@ WHERE
     return finalResponse;
 };
 
-const query1 = (text, params) => pool.query(text, params);
+const getRecUser = async (id) => {
+    // 1. Define all the queries needed for the dashboard
+    
+    // Query for the recruiter's basic profile information
+    const recruiterInfoQuery = `
+        SELECT id, username, "fullName", email, "createdAt" 
+        FROM "Recruiters" 
+        WHERE id = $1
+    `;
+
+    // Query for high-level statistics
+    const statsQuery = `
+        SELECT 
+            COUNT(j.job_id) AS total_jobs,
+            SUM(CASE WHEN j.is_active = true THEN 1 ELSE 0 END) AS active_jobs,
+            (SELECT COUNT(*) 
+             FROM "Job_Applications" ja_inner 
+             JOIN "Jobs" j_inner ON ja_inner.job_id = j_inner.job_id 
+             WHERE j_inner.recruiter_id = $1) AS total_applications
+        FROM "Jobs" j
+        WHERE j.recruiter_id = $1
+    `;
+
+    // Query for all jobs posted by the recruiter, including a count of applications for each
+    const jobsQuery = `
+        SELECT
+            j.job_id,
+            j.title,
+            j.is_active,
+            j.posted_at,
+            (SELECT COUNT(*) 
+             FROM "Job_Applications" ja 
+             WHERE ja.job_id = j.job_id) AS application_count
+        FROM "Jobs" j
+        WHERE j.recruiter_id = $1
+        ORDER BY j.posted_at DESC
+    `;
+    
+    // Query for the 10 most recent job applications received
+    // Note: This assumes a "Candidates" table exists with an "id" and "fullName"
+    const recentApplicationsQuery = `
+        SELECT 
+            ja.application_id,
+            ja.status,
+            ja.applied_at,
+            j.title AS job_title,
+            can."fullName" AS candidate_name 
+        FROM "Job_Applications" ja
+        JOIN "Jobs" j ON ja.job_id = j.job_id
+        JOIN "Candidates" can ON ja.candidate_id = can.id
+        WHERE j.recruiter_id = $1
+        ORDER BY ja.applied_at DESC
+        LIMIT 10
+    `;
+
+    // 2. Execute all queries in parallel for better performance
+    const [
+        recruiterResult,
+        statsResult,
+        jobsResult,
+        recentApplicationsResult
+    ] = await Promise.all([
+        client.query(recruiterInfoQuery, [id]),
+        client.query(statsQuery, [id]),
+        client.query(jobsQuery, [id]),
+        client.query(recentApplicationsQuery, [id])
+    ]);
+    
+    // 3. Check if the recruiter exists
+    if (recruiterResult.rows.length === 0) {
+        return null;
+    }
+    
+    // 4. Assemble the final, structured response object
+    const finalResponse = {
+        // Basic info about the logged-in recruiter
+        recruiterInfo: recruiterResult.rows[0],
+        
+        // Key performance indicators for a quick overview
+        stats: {
+            totalJobs: parseInt(statsResult.rows[0].total_jobs || 0, 10),
+            activeJobs: parseInt(statsResult.rows[0].active_jobs || 0, 10),
+            totalApplications: parseInt(statsResult.rows[0].total_applications || 0, 10),
+        },
+        
+        // A detailed list of all jobs posted by the recruiter
+        jobs: jobsResult.rows.map(job => ({
+            ...job,
+            application_count: parseInt(job.application_count, 10)
+        })),
+        
+        // A feed of the latest applications to keep the recruiter updated
+        recentApplications: recentApplicationsResult.rows
+    };
+    
+    return finalResponse;
+};
+// ✅ --- Query Function ---
+const query = async (text, params) => {
+  try {
+    const result = await client.query(text, params);
+    return result;
+  } catch (error) {
+    console.error('Database query error:', error);
+    throw error;
+  }
+};
 
 // ✅ --- Export Everything ---
 export {
-  client as query,
+  query,
+  client,
   register,
   login,
   logOut,
@@ -338,7 +451,7 @@ export {
   updateCandidateProfile,
   getRecruiterById,
   getUser,
-  query1
+  getRecUser
 };
 
 

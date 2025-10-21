@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '../axiosConfig';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -309,9 +309,9 @@ const RecruiterRegister = ({ theme }) => {
     const handleSubmit = async (e)=>{
         e.preventDefault();
         try{
-        const res = await axios.post("/users/register", formData);
+        const res = await api.post("/api/users/register", formData);
         console.log(res.data);
-        if(res.body.success === true)
+        if(res.data.success === true)
             navigate('/r/login');
         }catch(e){
             console.log(e, "Error while logging Recruiter");

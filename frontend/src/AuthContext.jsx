@@ -26,12 +26,28 @@ export const AuthProvider = ({ children }) => {
     init();
   }, [token]);
 
-  const login = useCallback(async (email, password) => {
-    const { token: newToken, user: userData } = await loginService(email, password);
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
-    setUser(userData);
-  }, []);
+const login = useCallback(async (email, password) => {
+    // loginService likely returns an object like { success: true, data: { user, accessToken, refreshToken } }
+    const result = await loginService(email, password);
+    return result;
+    // Now, check if the login was successful and get the data you need
+    if (result.success && result.data) {
+        const { user: userData, accessToken: newAccessToken, refreshToken: newRefreshToken } = result.data;
+        
+        // Store the access token for API calls
+        localStorage.setItem("accessToken", newAccessToken);
+        
+        // You might also want to store the refresh token
+        localStorage.setItem("refreshToken", newRefreshToken);
+        
+        // Update your application state
+        setToken(newAccessToken);
+        setUser(userData);
+    } else {
+        // Handle login failure
+        console.error("Login failed:", result.message);
+    }
+}, []);
 
   const logout = useCallback(() => {
     logoutService(); // Optional: API call to revoke token

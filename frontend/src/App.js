@@ -1,49 +1,75 @@
-import './App.css';
-import {BrowserRouter, Routes, Route} from 'react-router-dom';
-import Layout from './Components/Layout';
-import Register from './Pages/Register';
-import Login from './Pages/Login';
-import DomainDashboard from './Pages/DomainDashboard';
-import RecruiterRegister from './Pages/RecruiterRegister';
-import RecruiterLogin from './Pages/RecruiterLogin';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+
+// Import Layout and Page Components
+import Layout from './Components/Layout/Layout';
+import Home from './Pages/Home/Home';
+import Login from './Pages/Auth/Login';
+import Register from './Pages/Auth/Register';
+import RecruiterRegister from './Pages/Auth/RecruiterRegister';
+import RecruiterLogin from './Pages/Auth/RecruiterLogin';
+import Dashboard from './Pages/Dashboard/Dashboard';
+import DomainSelection from './Pages/Domain/DomainSelection';
+import DomainOverview from './CandidateDomainDashboard';
+import ExamSystem from './Pages/Exam/ExamSystem';
+import ProblemLobby from './Pages/Problem/ProblemLobby';
+import ProblemView from './Pages/Problem/ProblemView';
+import RecruiterDashboard from './Pages/Recruiter/RecruiterDashboard';
+import Profile from './Pages/Profile/Profile';
+import DomainsList from './CandidateDomainDashboard'
 import UpdateDashboard from './Pages/UpdateDashboard';
-import Dashboard from './Pages/Dashboard';
-import { ThemeAndAuthProvider } from './ThemeAndAuthContext';
-import CandidateDomainDashboard from './CandidateDomainDashboard';
-// Assuming you have components for these new pages
-// import ExamsPage from './Pages/ExamsPage'; 
-import DsaExam from './DsaExam'; 
+import DomainDash from './DomainDash';
+import Coderunner from './Exam/CodeRunner';
+import ExamLobby from './Exam/ExamLobby';
+import ExamView from './Exam/ExamView'
+import CreateEvent from './Exam/AdminAcess';
+import ContestLobby from './Contests/ContestLobby';
+import ContestView from './Contests/ContestView';
+
+import './App.css';
 
 function App() {
   return (
-    <ThemeAndAuthProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout/>}>
-          
-          {/* Authentication & User Routes */}
-          <Route path="register" element={<Register/>}/>
-          <Route path="login" element={<Login/>}/>
-          <Route path='dashboard' element={<Dashboard/>}/>
-          <Route path='updatedashboard' element={<UpdateDashboard/>}/>
-          
-          {/* Recruiter Routes */}
-          <Route path='r/register' element={<RecruiterRegister/>}/>
-          <Route path='r/login' element={<RecruiterLogin/>}/>
-          
-          {/* Domain & Candidate Routes */}
-          {/* Main domain overview/landing */}
-          <Route path='domain' element={<CandidateDomainDashboard/>}/> 
-          <Route path='domain/dashboard' element={<DomainDashboard/>}/>
-          
-          {/* Added New Routes */}
-          {/* <Route path='exams' element={<ExamsPage/>}/>  */}
-          <Route path='dsa' element={<DsaExam/>}/> 
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              {/* == Public Routes (No Layout) == */}
+              <Route path="/admin" element={<CreateEvent />} />
+              <Route path="/contests" element={<ContestLobby />} />
+              <Route path="/contest/:contestId" element={<ContestView />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/recruiter/login" element={<RecruiterLogin />} />
+              <Route path="/recruiter/register" element={<RecruiterRegister />} />
 
-        </Route>
-      </Routes>
-    </BrowserRouter>
-    </ThemeAndAuthProvider>
+              {/* == Parent Layout Route == */}
+              {/* All child routes inside here will render within the Layout component's <Outlet /> */}
+              <Route element={<Layout />}>
+                <Route path="/updatedashboard" element={<UpdateDashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/domain/selection" element={<DomainsList />} />
+                <Route path="/domain/:domainId" element={<DomainDash />} />
+                <Route path="/problems" element={<ProblemLobby />} />
+                <Route path="/problem/:problemId" element={<ProblemView />} />
+                <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+                <Route path="/profile" element={<UpdateDashboard />} />
+                <Route path="/CodeRunner" element={<Coderunner/>}/>
+                <Route path="/exams" element={<ExamLobby/>}/>
+              <Route path="/exam/:problemId" element={<ExamView/>}/>
+              </Route>
+
+              {/* Catch-all route to redirect unknown paths */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

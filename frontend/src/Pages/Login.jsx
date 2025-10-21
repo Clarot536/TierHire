@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../axiosConfig';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -53,14 +53,15 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Instead of an alert, we'll show a message on the UI
-    const res = await axios.post("/users/login", {"credential" : credential, "password" : password, role : "CANDIDATE"},  { withCredentials: true });
-    console.log(res.data.data);
+    const res = await api.post("/api/users/login", {"credential" : credential, "password" : password, role : "CANDIDATE"});
+    console.log(res.data.data.user.cvUrl);
+    console.log(res.data.data.user);
     if(res.data.success==true){
-      if(res.data.cvUrl == true)
+      if(res.data.data.user.cvUrl!=undefined)
       navigate("/dashboard");
       else
         navigate("/updateDashboard");
-      setMessage('Login button clicked!');
+      setMessage('Login successful!');
     }
     else{
       setMessage("Error while logging in");

@@ -284,7 +284,7 @@ const AttemptedQuestionsList = ({ previousTests }) => {
 
 // --- Main Application Component ---
 
-export default function App() {
+export default function DomainDashboard() {
     const [performanceData] = useState(INITIAL_DATA);
     const [currentDomainKey, setCurrentDomainKey] = useState('data-science');
     const [isDarkMode, setIsDarkMode] = useState(false);

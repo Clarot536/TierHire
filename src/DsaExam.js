@@ -63,7 +63,7 @@ export default function DsaExam({ problem, allProblemIds }) {
     const fetchSubmissions = async () => {
         if (submissions.length > 0 && activeTab === 'submissions') return; // Avoid re-fetching
         try {
-            const { data } = await axios.get(`http://localhost:5000/api/submissions/${problemId}`);
+            const { data } = await axios.get(`submissions/${problemId}`);
             setSubmissions(data);
         } catch (error) {
             console.error("Failed to fetch submissions", error);
@@ -92,7 +92,7 @@ export default function DsaExam({ problem, allProblemIds }) {
         setIsRunLoading(true);
         setRunOutput({ text: "", isError: false });
         try {
-            const { data } = await axios.post("http://localhost:5000/api/run", { language, code, input: customInput });
+            const { data } = await axios.post("/run", { language, code, input: customInput });
             setRunOutput({ text: data.error || data.output || "Execution finished with no output.", isError: !!data.error });
         } catch (err) {
             setRunOutput({ text: err.response?.data?.error || "An unexpected error occurred.", isError: true });
@@ -105,10 +105,10 @@ export default function DsaExam({ problem, allProblemIds }) {
         setIsSubmitLoading(true);
         setSubmissionResult(null);
         try {
-            const { data } = await axios.post("http://localhost:5000/api/submit", { problemId, code, language });
+            const { data } = await axios.post("submit", { problemId, code, language });
             setSubmissionResult(data);
             // Refresh submissions list if the user is viewing it or switches to it
-            const refreshedData = await axios.get(`http://localhost:5000/api/submissions/${problemId}`);
+            const refreshedData = await axios.get(`/submissions/${problemId}`);
             setSubmissions(refreshedData.data);
         } catch (err) {
             setSubmissionResult({ error: "Submission failed. The server might be down or there was an error." });

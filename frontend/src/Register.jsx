@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./axiosConfig";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
@@ -31,7 +31,7 @@ export default function Register() {
 
     const identifier = setTimeout(async () => {
       try {
-        const res = await axios.post("/users/checkUsername", { username: formData.username });
+        const res = await api.post("/api/users/checkUsername", { username: formData.username });
         if (res.data.exists) {
           setErrors((prev) => ({ ...prev, username: "Username is already taken." }));
         } else {
@@ -54,7 +54,7 @@ export default function Register() {
 
     const identifier = setTimeout(async () => {
       try {
-        const res = await axios.post("/users/checkEmail", { email: formData.email });
+        const res = await api.post("/api/users/checkEmail", { email: formData.email });
         if (res.data.exists) {
           setErrors((prev) => ({ ...prev, email: "This email is already registered." }));
         } else {
@@ -96,7 +96,7 @@ export default function Register() {
     }
 
     try {
-      const res = await axios.post("/users/register", formData, { withCredentials: true });
+      const res = await api.post("/api/users/register", formData);
 
       if (res.data.success) {
         navigate("/login");

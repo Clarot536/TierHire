@@ -1,7 +1,7 @@
 // src/Coderunner.js
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
-import axios from "axios";
+import api from "./axiosConfig";
 import FileBasedIde from "./FileBasedIde";
 import SqlRunner from "./SqlRunner";
 import './CodeRunner.css';
@@ -84,7 +84,7 @@ export default function Coderunner() {
     if (!code.trim()) { setOutput("⚠️ Please write some code first."); return; }
     setLoading(true); setOutput("");
     try {
-      const res = await axios.post("http://localhost:5000/run", { code, language: selectedLanguage });
+      const res = await api.post("/run", { code, language: selectedLanguage });
       setOutput(res.data.output);
     } catch (err) {
       console.error(err);
