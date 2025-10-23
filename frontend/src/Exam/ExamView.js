@@ -33,7 +33,7 @@ export default function ExamView() {
     }
 
     const renderExamComponent = () => {
-        const commonProps = { problem, allProblemIds, contestId: contest.contest_id };
+        const commonProps = { problem, allProblemIds };
         switch (problem.category) {
             case 'dsa':
                 return <DsaExam {...commonProps} />;

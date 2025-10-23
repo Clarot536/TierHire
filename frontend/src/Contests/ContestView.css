@@ -108,3 +108,21 @@
 .submit-contest-button:hover {
     background-color: #e53935;
 }
+
+.submit-contest-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 10px 20px;
+    background-color: red;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-contest-button:hover {
+    background-color: darkred;
+}

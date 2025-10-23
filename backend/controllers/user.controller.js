@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { register, login, getUserById,updateRefreshToken,checkEmail,checkUsername,updateCandidateProfile,getRecruiterById, getUser,logOut, getRecUser} from "../db.js"
-
+import { query } from "../db.js"
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -19,8 +19,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(400, "User Already Exists");
     }
-
-    console.log("Company ", companyname);
     const createdUser = await register(username, email, name, password, role, companyname);
 
     if (createdUser) {
@@ -65,7 +63,6 @@ const logInUser = asyncHandler(async (req, res) => {
     // }
     // const resumeUploadStatus=await uploadResume(resumeUploaded,existedUser?.user.id,role);
     let LoggedInUser=null
-    console.log(role);
     if(role==="CANDIDATE"){
         LoggedInUser = await getUserById(existedUser.user.id);
     }else if(role==="RECRUITER"){
@@ -200,7 +197,6 @@ const mainDashBoard = asyncHandler(async(req,res)=>{
 
 const getRecData = asyncHandler(async (req, res) => {
     try {
-      console.log("Hiiiii");
         const id = req.user?.id;
 
         if (!id) {
@@ -259,4 +255,123 @@ const getData = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard, getData, getRecData, getCurrentUser }
+export const getAppliedJobs = asyncHandler(async (req, res) => {
+    const { domainId } = req.params;
+    const { user } = req; // assuming user is set in middleware (auth check)
+
+    const appliedJobs = await query(
+        `SELECT ja.*, j."job_id", j."title", j."location", j."salary_range", j."description"
+        FROM "Job_Applications" ja
+        INNER JOIN "Jobs" j ON ja."job_id" = j."job_id"
+        WHERE ja."candidate_id" = $1
+        AND j."domain_id" = $2;`,
+        [user.id, domainId]
+    );
+
+    // Check if appliedJobs is an array or if it needs to be extracted
+    const jobs = appliedJobs.rows || appliedJobs; // assuming `rows` is where the actual data is
+    res.json({ data: jobs });
+});
+
+// Function to apply for a job
+export const applyForJob = asyncHandler(async (req, res) => {
+    const { job_id, candidate_id } = req.body;
+
+    // Check if the job exists
+    const job = await query(
+  `SELECT * FROM "Jobs" WHERE "job_id" = $1 LIMIT 1;`,
+  [job_id]
+);
+
+    if (!job) {
+        return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Check if the user has already applied for the job
+    const existingApplication = await query(
+      'SELECT * FROM "Job_Applications" WHERE "job_id" = $1 AND "candidate_id" = $2 LIMIT 1',
+      [job_id, candidate_id]
+    );
+    if (existingApplication.rows.length != 0) {
+        return res.status(200).json({ message: 'You have already applied for this job' });
+    }
+
+    // Create a new job application
+    const newApplication = await query(
+  'INSERT INTO "Job_Applications" ("job_id", "candidate_id", "status") VALUES ($1, $2, $3) RETURNING *;',
+  [job_id, candidate_id, 'APPLIED'] // Passing 'APPLIED' as default status
+);
+
+
+    res.status(201).json({ data: newApplication });
+});
+
+const getstats = asyncHandler(async (req, res)=>{
+  const id = req.user?.id;
+  const s1 = `select count(distinct problem_id) from submissions where candidate_id = $1 and status = 'Accepted'`;
+  const s2 = `select count(distinct contest_id) from "Contest_Participations" where candidate_id = $1`
+  const prob = await query(s1, [id]);
+  const cont = await query(s2, [id]);
+  const final = {problems : prob.rows[0].count, contests : cont.rows[0].count}
+  res.status(200).json(final)
+}
+
+);
+
+export const getUserParticipations = asyncHandler(async (req, res) => {
+    const candidateId = req.user.id;
+
+    if (!candidateId) {
+        throw new ApiError(401, "User not authenticated.");
+    }
+
+    // This query joins Contest_Participations with Contests
+    // to get the event type and domain_id for each participation.
+    const participationQuery = `
+        SELECT 
+            cp.contest_id,
+            cp.score,
+            c.type,
+            c.domain_id
+        FROM "Contest_Participations" cp
+        JOIN "Contests" c ON cp.contest_id = c.contest_id
+        WHERE cp.candidate_id = $1;
+    `;
+    
+    const result = await query(participationQuery, [candidateId]);
+    
+    return res.status(200).json(new ApiResponse(200, result.rows, "User participations fetched successfully."));
+});
+export const getPerformanceHistory = asyncHandler(async (req, res) => {
+    const candidateId = req.user?.id;
+
+    if (!candidateId) {
+        throw new ApiError(401, "User not authenticated.");
+    }
+
+    // This query joins Participations with Contests and Domains
+    // to get all the data the frontend card needs.
+    const historyQuery = `
+        SELECT 
+            cp.participation_id,
+            cp.contest_id,
+            cp.score,
+            cp.rank,
+            cp.domain_id,
+            c.title,
+            c.type,
+            c.start_time,
+            d.domain_name
+        FROM "Contest_Participations" cp
+        JOIN "Contests" c ON cp.contest_id = c.contest_id
+        JOIN "Domains" d ON c.domain_id = d.domain_id
+        WHERE cp.candidate_id = $1
+        ORDER BY cp.submission_time DESC;
+    `;
+    
+    const result = await query(historyQuery, [candidateId]);
+    
+    return res.status(200).json(new ApiResponse(200, result.rows, "Performance history fetched successfully."));
+});
+
+export { registerUser, logInUser,logOutUser,checkemail,checkusername,updateDetails,mainDashBoard, getData, getRecData, getCurrentUser, getstats }

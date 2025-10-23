@@ -5,6 +5,7 @@ import { query } from "../db.js";
 
 export const getContestById = asyncHandler(async (req, res) => {
     const { contestId } = req.params;
+    const candidateId = req.user.id;
 
     // Step 1: Query for the main contest details
     const contestQuery = `SELECT * FROM "Contests" WHERE contest_id = $1`;
@@ -15,6 +16,36 @@ export const getContestById = asyncHandler(async (req, res) => {
     }
 
     const contestData = contestResult.rows[0];
+
+    // --- Smart Timer Logic ---
+    if (contestData.type === 'SHIFTING_TEST') {
+        // It's a Solo Exam. We need to find the user's personal start time.
+        const participationResult = await query(
+            `SELECT submission_time FROM "Contest_Participations" WHERE candidate_id = $1 AND contest_id = $2`,
+            [candidateId, contestId]
+        );
+        
+        if (participationResult.rows.length === 0) {
+            // This can happen if the user navigates directly to the URL without clicking "Start Exam"
+            throw new ApiError(403, "You have not started this exam. Please start it from the lobby.");
+        }
+
+        const userStartTime = new Date(participationResult.rows[0].submission_time);
+        // Calculate the user's personal end_time
+        const userEndTime = new Date(userStartTime.getTime() + contestData.duration_minutes * 60000);
+        
+        // Overwrite the (null) end_time with the user's calculated end time.
+        contestData.end_time = userEndTime;
+    
+    } else if (contestData.type === 'INTERNAL_CONTEST') {
+        // It's a Competitive Contest. Check if it's active.
+        const now = new Date();
+        const start = new Date(contestData.start_time);
+        if (now < start) {
+            throw new ApiError(403, "This contest has not started yet.");
+        }
+    }
+    // --- End of Smart Timer Logic ---
 
     // Step 2: Query for all problems linked to this contest
     const problemsQuery = `
@@ -28,7 +59,6 @@ export const getContestById = asyncHandler(async (req, res) => {
 
     // Loop through each problem to fetch its visible test cases
     for (const problem of problems) {
-        // ✅ FIX: The table name has been changed from "Testcases" to "testcases" (all lowercase)
         const testCasesQuery = `
             SELECT input, expected_output 
             FROM "testcases" 
@@ -100,9 +130,21 @@ export const createContest = asyncHandler(async (req, res) => {
 });
 
 export const getContests = asyncHandler(async (req, res) => {
+    // ✅ FIX: The query now JOINS with the "Domains" table to get the domain_name
     const contestsQuery = `
-        SELECT contest_id, title, description, type, start_time, end_time, duration_minutes
-        FROM "Contests" ORDER BY start_time DESC NULLS LAST;
+        SELECT 
+            c.contest_id, 
+            c.title, 
+            c.description, 
+            c.type, 
+            c.start_time, 
+            c.end_time, 
+            c.duration_minutes, 
+            c.domain_id,
+            d.domain_name
+        FROM "Contests" c
+        JOIN "Domains" d ON c.domain_id = d.domain_id
+        ORDER BY d.domain_name, c.start_time DESC NULLS LAST;
     `;
     const result = await query(contestsQuery);
     return res.status(200).json(new ApiResponse(200, result.rows, "Contests fetched successfully."));

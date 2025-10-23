@@ -43,6 +43,7 @@ const RecruiterDashboard = () => {
                 throw new Error(errorData.message || "Failed to fetch dashboard data");
             }
             const result = await response.json();
+            console.log(result.data);
             setDashboardData(result.data);
 
             // Mock data - replace with API call if needed

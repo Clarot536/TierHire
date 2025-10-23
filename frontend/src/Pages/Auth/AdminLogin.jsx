@@ -5,7 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Eye, EyeOff, User, Lock, ArrowRight } from 'lucide-react';
 import './Auth.css';
 
-const Login = () => {
+const AdminLogin = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -31,16 +31,9 @@ const Login = () => {
     setError('');
 
     try {
-      console.log(formData);
-      const formData1 = {...formData, role : "CANDIDATE"}
-      const result = await login(formData1);
-      console.log("result ", result.user.data.user);
-      if (result.success){
-        if(result.user.data.user.cvUrl!=null)
-          navigate('/dashboard')
-        else
-          navigate('/updatedashboard');
-      } else {
+        if(formData.email === 'admin@tirehire.com' && formData.password==='Asdf1234')
+          navigate('/admin')
+        else {
         setError(result.message);
       }
     } catch (error) {
@@ -162,4 +155,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default AdminLogin;

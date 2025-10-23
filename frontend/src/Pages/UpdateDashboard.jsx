@@ -320,6 +320,7 @@ const UpdateDashboard = () => {
                   onClick={() => handleDomainToggle(d)}
                   style={{
                     ...styles.domainCard,
+                    color : "white",
                     borderColor: sel ? styles.accentColor : styles.cardBorder,
                     boxShadow: sel ? `0 0 10px ${styles.accentColor}` : 'none'
                   }}
@@ -500,7 +501,7 @@ const styles = {
   slider: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#2c2c38',
+    backgroundColor: '#e4e4ebff',
     borderRadius: '34px',
     transition: '0.4s',
     display: 'flex',
@@ -519,14 +520,16 @@ const styles = {
     padding: '20px',
     borderRadius: '16px',
     background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.15)'
+    border: '1px solid rgba(255,255,255,0.15)',
+    color : '#fff'
   },
   sectionHeader: {
     margin: 0,
-    fontSize: '2rem'
+    fontSize: '2rem',
+    color : '#fff'
   },
   sectionSub: {
-    color: '#bbb'
+    color: '#fcfcfcff'
   },
   domainsGrid: {
     display: 'grid',
@@ -546,7 +549,8 @@ const styles = {
   },
   domainName: {
     marginTop: '10px',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
+    color : 'white'
   },
   checkIcon: {
     position: 'absolute',
@@ -587,7 +591,8 @@ const styles = {
   },
   sectionTitle: {
     fontSize: '1.5rem',
-    marginBottom: '20px'
+    marginBottom: '20px',
+    color : 'white'
   },
   listContainer: {
     marginBottom: '20px'
@@ -605,7 +610,7 @@ const styles = {
     gap: '10px'
   },
   placeholderText: {
-    color: '#888',
+    color: '#fffbfbff',
     fontStyle: 'italic'
   },
   formGrid: {

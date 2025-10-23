@@ -16,14 +16,15 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  
+  const [performance, setPerformance] = useState(0);
+
   // State for general dashboard stats
   const [stats, setStats] = useState({
     totalProblems: 0,
     solvedProblems: 0,
-    currentRank: 0,
     contestsParticipated: 0
   });
+  
   const [recentActivity, setRecentActivity] = useState([]);
   const [upcomingContests, setUpcomingContests] = useState([]);
   
@@ -40,29 +41,42 @@ const Dashboard = () => {
 
   // Fetches general stats, activity, and contests
   const fetchDashboardData = async () => {
-    // MOCK DATA: Replace with actual API calls
-    setStats({
-      totalProblems: 150,
-      solvedProblems: 45,
-      currentRank: 1250,
-      contestsParticipated: 8
-    });
-    setRecentActivity([
-      { id: 1, type: 'problem_solved', title: 'Two Sum', points: 10, time: '2 hours ago' },
-      { id: 2, type: 'contest_joined', title: 'Weekly Coding Contest', points: 150, time: '1 day ago' },
-      { id: 3, type: 'tier_upgraded', title: 'Moved to Silver Tier', points: 0, time: '3 days ago' }
-    ]);
-    setUpcomingContests([
-      { id: 1, title: 'Weekly Coding Contest', date: 'Tomorrow', time: '2:00 PM' },
-      { id: 2, title: 'DSA Challenge', date: 'Friday', time: '6:00 PM' },
-    ]);
+    try {
+      const response = await fetch('/api/users/getstats');
+      if (!response.ok) throw new Error("Failed to fetch details");
+      const result = await response.json();
+      
+      const { problems, contests } = result;  // Destructure the response to get 'problems' and 'contests'
+
+      setStats({
+        totalProblems: 150,  // You can replace this with dynamic total problems if you have it in your API
+        solvedProblems: problems,
+        contestsParticipated: contests
+      });
+
+      const performance = Math.round(((problems / 150) * 100 + contests * 3.2) * 100) / 100;
+      setPerformance(performance);
+
+      setRecentActivity([
+        // { id: 1, type: 'problem_solved', title: 'Two Sum', points: 10, time: '2 hours ago' },
+        // { id: 2, type: 'contest_joined', title: 'Weekly Coding Contest', points: 150, time: '1 day ago' },
+        // { id: 3, type: 'tier_upgraded', title: 'Moved to Silver Tier', points: 0, time: '3 days ago' }
+      ]);
+
+      setUpcomingContests([
+        { id: 1, title: 'Weekly Coding Contest', date: 'Tomorrow', time: '2:00 PM' },
+        { id: 2, title: 'DSA Challenge', date: 'Friday', time: '6:00 PM' }
+      ]);
+      
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    }
   };
 
   // ✅ Fetches the user's selected domains
   const fetchSelectedDomains = async () => {
     try {
       setDomainsLoading(true);
-      // This endpoint fetches domains for the logged-in user
       const response = await fetch('/api/domains/domains');
       
       if (!response.ok) {
@@ -81,16 +95,15 @@ const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   const statCards = [
     { icon: Code, title: 'Problems Solved', value: stats.solvedProblems, total: stats.totalProblems, link: '/problems' },
-    { icon: Trophy, title: 'Current Rank', value: `#${stats.currentRank}`, link: '/domain/1' },
     { icon: Calendar, title: 'Contests Joined', value: stats.contestsParticipated, link: '/contests' },
-    { icon: BarChart3, title: 'Performance', value: '85%', link: '/profile' }
+    { icon: BarChart3, title: 'Performance', value: `${performance}%` }
   ];
 
   return (
@@ -133,7 +146,7 @@ const Dashboard = () => {
         {/* Recent Activity */}
         <div className="dashboard-section">
           <div className="section-header">
-            <h2 className="section-title">Recent Activity</h2>
+            <h2 className="section-title" style={{color : 'red'}}>Recent Activity</h2>
             <Link to="/profile" className="section-link">View All <ArrowRight size={16} /></Link>
           </div>
           <div className="activity-list">
@@ -157,7 +170,7 @@ const Dashboard = () => {
         {/* Upcoming Contests */}
         <div className="dashboard-section">
           <div className="section-header">
-            <h2 className="section-title">Upcoming Contests</h2>
+            <h2 className="section-title" style={{color : 'red'}}>Upcoming Contests</h2>
             <Link to="/contests" className="section-link">View All <ArrowRight size={16} /></Link>
           </div>
           <div className="contest-list">
@@ -178,7 +191,7 @@ const Dashboard = () => {
       {/* ✅ --- NEW: Selected Domains Section --- */}
       <div className="dashboard-section">
         <div className="section-header">
-          <h2 className="section-title">Selected Domains</h2>
+          <h2 className="section-title" style={{color : 'red'}}>Selected Domains</h2>
           <Link to="/domain/selection" className="section-link">
             Manage Domains <ArrowRight size={16} />
           </Link>

@@ -9,6 +9,7 @@ import {
   Briefcase, 
   BarChart3, 
   Settings,
+  History,
   FileText,
   Target,
   Calendar,
@@ -29,6 +30,7 @@ const Sidebar = () => {
     { path: '/domain/selection', icon: Target, label: 'Domains' },
     { path: '/exams', icon: Code, label: 'Problems' },
     { path: '/contests', icon: Trophy, label: 'Exams and Contests' },
+    { path: '/pastperformance', icon: History, label: 'Past Performances' },
     { path: '/profile', icon: Settings, label: 'Profile' }
   ];
 
@@ -36,9 +38,6 @@ const Sidebar = () => {
     { path: '/recruiter/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/recruiter/candidates', icon: Users, label: 'Candidates' },
     { path: '/recruiter/jobs', icon: Briefcase, label: 'Jobs' },
-    { path: '/recruiter/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/recruiter/contests', icon: Calendar, label: 'Contests' },
-    { path: '/profile', icon: Settings, label: 'Profile' }
   ];
 
   const menuItems = user?.role === 'RECRUITER' ? recruiterMenuItems : candidateMenuItems;
@@ -70,19 +69,6 @@ const Sidebar = () => {
             })}
           </ul>
         </nav>
-
-        {/* User Info */}
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">
-              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <div className="user-details">
-              <p className="user-name">{user?.fullName || user?.username}</p>
-              <p className="user-role">{user?.role}</p>
-            </div>
-          </div>
-        </div>
       </div>
     </aside>
   );

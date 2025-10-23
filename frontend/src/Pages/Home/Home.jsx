@@ -73,6 +73,9 @@ const Home = () => {
                     <Link to="/login" className="btn btn-secondary btn-lg">
                       Login
                     </Link>
+                    <Link to="/adminlogin" className="btn btn-secondary btn-lg">
+                      Admin
+                    </Link>
                   </>
                 ) : (
                   <Link to="/dashboard" className="btn btn-primary btn-lg">

@@ -129,15 +129,25 @@ const getDomainsById = asyncHandler(async (req, res) => {
             // Provides a placeholder for company_name.
             // The permanent fix is to add a 'company_id' column to the "Jobs" table.
             const jobsQuery = `
-                SELECT
-                    j.job_id,
-                    j.title,
-                    j.location,
-                    'N/A' as company_name 
+            SELECT
+                j.job_id,
+                j.title,
+                j.location,
+                c.company_name, -- Get company_name from the Companies table
+                j.description,  -- Assuming you want other details as well
+                j.requirements,
+                j.salary_range,
+                j.status,
+                j.posted_at,
+                j.recruiter_id,
+                j.domain_id,
+                j.target_tier_id
                 FROM "Jobs" j
+                JOIN "Recruiters" r ON j.recruiter_id = r.id -- Join Jobs to Recruiters
+                JOIN "Companies" c ON r.id = c.recruiter_id -- Join Recruiters to Companies
                 WHERE j.domain_id = $1
-                  AND j.target_tier_id = $2
-                  AND j.is_active = TRUE
+                AND j.target_tier_id = $2
+                AND j.is_active = TRUE
                 ORDER BY j.posted_at DESC;
             `;
             const jobsResult = await query(jobsQuery, [domainId, candidatePerformance.tier_id]);
@@ -160,6 +170,31 @@ const getDomainsById = asyncHandler(async (req, res) => {
             throw error;
         }
         throw new ApiError(500, "Failed to fetch domain data.");
+    }
+});
+export const getDomainLeaderboard = asyncHandler(async (req, res) => {
+    const { domainId } = req.params;
+
+    const leaderboardQuery = `
+        SELECT
+            cdp.candidate_id,
+            cdp.current_rank,
+            cdp.total_score,
+            c."fullName"
+        FROM "Candidate_Domain_Performance" cdp
+        -- Join with Candidates table on the candidate's primary key (id)
+        JOIN "Candidates" c ON cdp.candidate_id = c.id
+        WHERE cdp.domain_id = $1
+        ORDER BY cdp.current_rank ASC, cdp.total_score DESC
+        LIMIT 100; -- Limit to the top 100 for performance
+    `;
+    
+    try {
+        const result = await query(leaderboardQuery, [domainId]);
+        return res.status(200).json(new ApiResponse(200, result.rows, "Leaderboard fetched successfully."));
+    } catch (error) {
+        console.error("Error fetching domain leaderboard:", error);
+        throw new ApiError(500, "Failed to fetch leaderboard.");
     }
 });
 

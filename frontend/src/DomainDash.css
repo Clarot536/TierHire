@@ -209,3 +209,28 @@
     color: #dc3545;
     font-weight: 500;
 }
+
+/* --- Add this new class to your DomainDash.css file --- */
+
+.btn-applied {
+    /* Green color for "Applied" status */
+    background-color: #28a745; 
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: default; /* Change cursor to indicate it's not clickable */
+    transition: background-color 0.2s;
+    opacity: 0.8; /* Slightly muted to show it's disabled */
+}
+
+/* Ensure a disabled button has no hover effects */
+.btn-applied:hover,
+.btn-primary:disabled {
+    background-color: #28a745; /* No change on hover for applied button */
+    box-shadow: none;
+    transform: none;
+    cursor: default;
+}

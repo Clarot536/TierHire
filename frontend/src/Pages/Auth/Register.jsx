@@ -82,7 +82,6 @@ const Register = () => {
               Full Name
             </label>
             <div className="input-group">
-              <User size={20} className="input-icon" />
               <input
                 type="text"
                 id="fullName"
@@ -101,7 +100,6 @@ const Register = () => {
               Username
             </label>
             <div className="input-group">
-              <UserCheck size={20} className="input-icon" />
               <input
                 type="text"
                 id="username"
@@ -120,7 +118,6 @@ const Register = () => {
               Email Address
             </label>
             <div className="input-group">
-              <Mail size={20} className="input-icon" />
               <input
                 type="email"
                 id="email"
@@ -139,7 +136,6 @@ const Register = () => {
               Password
             </label>
             <div className="input-group">
-              <Lock size={20} className="input-icon" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
@@ -165,7 +161,6 @@ const Register = () => {
               Confirm Password
             </label>
             <div className="input-group">
-              <Lock size={20} className="input-icon" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"

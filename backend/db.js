@@ -331,7 +331,6 @@ WHERE
 
 const getRecUser = async (id) => {
     // 1. Define all the queries needed for the dashboard
-    
     // Query for the recruiter's basic profile information
     const recruiterInfoQuery = `
         SELECT id, username, "fullName", email, "createdAt" 
@@ -375,7 +374,7 @@ const getRecUser = async (id) => {
             ja.status,
             ja.applied_at,
             j.title AS job_title,
-            can."fullName" AS candidate_name 
+            can."username" AS candidate_name 
         FROM "Job_Applications" ja
         JOIN "Jobs" j ON ja.job_id = j.job_id
         JOIN "Candidates" can ON ja.candidate_id = can.id

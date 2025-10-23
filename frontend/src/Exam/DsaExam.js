@@ -21,6 +21,7 @@ const languageOptions = [
 
 // The contestId is passed down from the parent ContestView component
 export default function DsaExam({ problem, allProblemIds = [], contestId }) {
+    console.log("Contest Id : ", contestId);
     const { problemId: problemIdFromUrl } = useParams();
     // Use the ID from the prop if available (in ContestView), otherwise use the one from the URL (in ExamView)
     const problemId = problem?.id || problemIdFromUrl;

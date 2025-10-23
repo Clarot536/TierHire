@@ -37,28 +37,6 @@ const Navbar = () => {
             <span className="logo-text">TierHire</span>
           </div>
         </Link>
-
-        {/* Desktop Navigation */}
-        <div className="navbar-menu desktop-menu">
-          {isAuthenticated ? (
-            <>
-              <Link to="/dashboard" className="navbar-link">Dashboard</Link>
-              <Link to="/problems" className="navbar-link">Problems</Link>
-              {user?.role === 'RECRUITER' ? (
-                <Link to="/recruiter/dashboard" className="navbar-link">Recruiter Dashboard</Link>
-              ) : (
-                <Link to="/domain/selection" className="navbar-link">Domains</Link>
-              )}
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="navbar-link">Login</Link>
-              <Link to="/register" className="navbar-link">Register</Link>
-              <Link to="/recruiter/login" className="navbar-link">Recruiter Login</Link>
-            </>
-          )}
-        </div>
-
         {/* Right side actions */}
         <div className="navbar-actions">
           {/* Theme Toggle */}
@@ -136,40 +114,6 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="mobile-menu">
           <div className="mobile-menu-content">
-            {isAuthenticated ? (
-              <>
-                <Link to="/dashboard" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Dashboard
-                </Link>
-                <Link to="/problems" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Problems
-                </Link>
-                {user?.role === 'RECRUITER' ? (
-                  <Link to="/recruiter/dashboard" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                    Recruiter Dashboard
-                  </Link>
-                ) : (
-                  <Link to="/domain/selection" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                    Domains
-                  </Link>
-                )}
-                <Link to="/profile" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Profile
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Login
-                </Link>
-                <Link to="/register" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Register
-                </Link>
-                <Link to="/recruiter/login" className="mobile-menu-link" onClick={() => setIsMenuOpen(false)}>
-                  Recruiter Login
-                </Link>
-              </>
-            )}
           </div>
         </div>
       )}

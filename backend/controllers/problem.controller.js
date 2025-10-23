@@ -71,19 +71,20 @@ const submitSolution = asyncHandler(async (req, res) => {
     // Destructure all possible fields from the body
     const { problemId, code, language, contestId, userQuery, files, status: clientStatus, score: clientScore } = req.body;
     const candidateId = req.user?.id;
-    console.log(candidateId, contestId);
+
     if (!candidateId) {
         throw new ApiError(401, "User not authenticated.");
     }
-    if (!problemId || !contestId) {
-        throw new ApiError(400, "Problem ID and Contest ID are required for a submission.");
+    if (!problemId) {
+        throw new ApiError(400, "Problem ID is required for a submission.");
     }
 
     let submissionData = {};
     let problemScore = 0;
     let finalStatus = "Pending";
+    let responseData = {};
 
-    // --- Main Logic: Differentiate submission type ---
+    // --- Step 1: Judge the submission based on its type ---
     if (code && language) { // This is a DSA submission
         const testCasesRes = await query(`SELECT * FROM "testcases" WHERE problem_id = $1 AND is_hidden = TRUE`, [problemId]);
         const testCases = testCasesRes.rows;
@@ -108,12 +109,8 @@ const submitSolution = asyncHandler(async (req, res) => {
 
         problemScore = (passedCount / testCases.length) * 100;
         finalStatus = problemScore === 100 ? "Accepted" : "Wrong Answer";
-        
-        submissionData = {
-            code: code,
-            language: language,
-            responseData: { passedCount, totalCount: testCases.length }
-        };
+        submissionData = { code: code, language: language };
+        responseData = { passedCount, totalCount: testCases.length }; // Add test case data to response
 
     } else if (userQuery) { // This is an SQL submission
         // (Your SQL judging logic would go here)
@@ -130,42 +127,43 @@ const submitSolution = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid submission payload.");
     }
 
-    // --- Database Operations ---
-
-    // Step 1: Save this individual submission with candidate_id and contest_id
+    // --- Step 2: Save the individual submission ---
+    // The 'contestId' will be NULL if it's undefined, which is perfect.
     await query(
         `INSERT INTO "submissions" (problem_id, candidate_id, contest_id, code, language, status, score) 
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [problemId, candidateId, contestId, submissionData.code, submissionData.language, finalStatus, problemScore]
+        [problemId, candidateId, contestId || null, submissionData.code, submissionData.language, finalStatus, problemScore]
     );
 
-    // Step 2: Recalculate the TOTAL contest score based on the BEST submission for EACH problem
-    const totalScoreQuery = `
-        WITH best_scores AS (
-            SELECT 
-                problem_id, 
-                MAX(score) as max_score
-            FROM "submissions"
-            WHERE candidate_id = $1 AND contest_id = $2
-            GROUP BY problem_id
-        )
-        SELECT SUM(max_score) as new_total_score FROM best_scores;
-    `;
-    const totalScoreResult = await query(totalScoreQuery, [candidateId, contestId]);
-    const newTotalContestScore = totalScoreResult.rows[0].new_total_score || 0;
+    // --- Step 3: (Conditional Logic) If this is part of a contest, update the contest score ---
+    if (contestId) {
+        // Recalculate the TOTAL contest score based on the BEST submission for EACH problem
+        const totalScoreQuery = `
+            WITH best_scores AS (
+                SELECT 
+                    problem_id, 
+                    MAX(score) as max_score
+                FROM "submissions"
+                WHERE candidate_id = $1 AND contest_id = $2
+                GROUP BY problem_id
+            )
+            SELECT SUM(max_score) as new_total_score FROM best_scores;
+        `;
+        const totalScoreResult = await query(totalScoreQuery, [candidateId, contestId]);
+        const newTotalContestScore = totalScoreResult.rows[0].new_total_score || 0;
 
-    // Step 3: Update the main Contest_Participations table with the new total score
-    await query(
-        `UPDATE "Contest_Participations" SET score = $1 WHERE candidate_id = $2 AND contest_id = $3`,
-        [newTotalContestScore, candidateId, contestId]
-    );
+        // Update the main Contest_Participations table with the new total score
+        await query(
+            `UPDATE "Contest_Participations" SET score = $1 WHERE candidate_id = $2 AND contest_id = $3`,
+            [newTotalContestScore, candidateId, contestId]
+        );
+        
+        responseData.newTotalContestScore = newTotalContestScore;
+    }
 
-    const responseData = {
-        score: problemScore.toFixed(0),
-        status: finalStatus,
-        ...submissionData.responseData, // Includes passedCount and totalCount for DSA
-        newTotalContestScore: newTotalContestScore
-    };
+    // Add the final problem score and status to the response
+    responseData.score = problemScore.toFixed(0);
+    responseData.status = finalStatus;
 
     return res.status(200).json(new ApiResponse(200, responseData, "Submission processed successfully."));
 });

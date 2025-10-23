@@ -1,7 +1,7 @@
 import Router from "express"
 import {registerUser,logInUser,logOutUser} from "../controllers/user.controller.js"
 import {upload} from "../middlewares/multer.js"
-import { checkusername, checkemail, updateDetails, mainDashBoard, getData, getRecData, getCurrentUser } from "../controllers/user.controller.js";
+import { checkusername, checkemail, updateDetails, mainDashBoard, getData, getPerformanceHistory, getRecData, getCurrentUser, getAppliedJobs, applyForJob, getstats, getUserParticipations } from "../controllers/user.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.js"; 
 const router  = Router();
@@ -27,16 +27,21 @@ router.route("/getData").get(
     verifyJWT,
     getData
 );
+router.route("/me/participations").get(verifyJWT, getUserParticipations);
+router.route("/me/performancehistory").get(verifyJWT, getPerformanceHistory);
 
 router.route("/getRecData").get(
-    // 1. Add this logging middleware
-    (req, res, next) => {
-        console.log("➡️ Calling controller: getRecData");
-        next(); // 2. Pass control to the next function (verifyJWT)
-    },
     verifyJWT,
     getRecData
 );
+router.route('/job-applications/:domainId')
+    .get(verifyJWT, getAppliedJobs);
 
+// Apply for a job
+router.route('/job-applications')
+    .post(verifyJWT, applyForJob);
+
+router.route('/getstats')
+    .get(verifyJWT, getstats);
 
 export default router

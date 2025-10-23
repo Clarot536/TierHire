@@ -27,6 +27,8 @@ import ExamView from './Exam/ExamView'
 import CreateEvent from './Exam/AdminAcess';
 import ContestLobby from './Contests/ContestLobby';
 import ContestView from './Contests/ContestView';
+import AdminLogin from './Pages/Auth/AdminLogin';
+import PastPerformance from './Pages/Dashboard/PastPerformance';
 
 import './App.css';
 
@@ -39,7 +41,9 @@ function App() {
             <Routes>
               {/* == Public Routes (No Layout) == */}
               <Route path="/admin" element={<CreateEvent />} />
+              <Route path="/adminlogin" element={<AdminLogin />} />
               <Route path="/contests" element={<ContestLobby />} />
+              <Route path="/pastperformance" element={<PastPerformance />} />
               <Route path="/contest/:contestId" element={<ContestView />} />
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

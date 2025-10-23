@@ -7,8 +7,7 @@ import './ContestView.css';
 
 const ContestView = () => {
     const { contestId } = useParams();
-    const navigate = useNavigate();
-
+    const navigate = useNavigate(); // Hook for navigation
     const [contest, setContest] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -17,11 +16,22 @@ const ContestView = () => {
 
     useEffect(() => {
         const fetchContest = async () => {
+            if (!contestId) {
+                setError('Contest ID is missing!');
+                setLoading(false);
+                return;
+            }
             try {
+                // This request hits your "smart" getContestById controller
                 const response = await fetch(`/api/contests/${contestId}`, { credentials: 'include' });
-                if (!response.ok) throw new Error('Failed to fetch contest data.');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch contest data.');
+                }
                 const result = await response.json();
                 setContest(result.data);
+
+                // Automatically select the first problem to display
                 if (result.data.problems && result.data.problems.length > 0) {
                     setSelectedProblem(result.data.problems[0]);
                 }
@@ -34,8 +44,12 @@ const ContestView = () => {
         fetchContest();
     }, [contestId]);
 
+    // Timer effect with auto-redirect
     useEffect(() => {
-        if (!contest || !contest.end_time) return;
+        // Don't start the timer until the contest data (with its end_time) is loaded
+        if (!contest || !contest.end_time) {
+            return;
+        }
 
         const interval = setInterval(() => {
             const now = new Date();
@@ -43,8 +57,11 @@ const ContestView = () => {
             const diff = end - now;
 
             if (diff <= 0) {
-                setTimeLeft('Contest Ended');
+                setTimeLeft('00:00:00');
                 clearInterval(interval);
+                // ✅ FIX: Redirect to dashboard when time is up
+                alert("Time's up! You will now be redirected to the dashboard.");
+                navigate('/dashboard');
                 return;
             }
 
@@ -52,14 +69,13 @@ const ContestView = () => {
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            setTimeLeft(
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-            );
+            setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [contest]);
+    }, [contest, navigate]);
 
+    // This function dynamically renders the correct exam component based on the problem's category
     const renderExamComponent = () => {
         if (!selectedProblem) {
             return <div className="view-loading">Select a problem to begin.</div>;
@@ -68,7 +84,7 @@ const ContestView = () => {
         const commonProps = {
             problem: selectedProblem,
             allProblemIds: contest.problems.map((p) => p.id),
-            contestId: contest.contest_id,
+            contestId: contest.contest_id, // Pass the contestId to the exam component
         };
 
         switch (selectedProblem.category) {
@@ -83,26 +99,23 @@ const ContestView = () => {
         }
     };
 
-    const handleSubmitContest = () => {
-        // Optionally confirm submission here
-        navigate('/dashboard');
-    };
-
     if (loading) return <div className="view-loading">Loading Contest...</div>;
     if (error) return <div className="view-error">Error: {error}</div>;
     if (!contest) return <div>Contest not found.</div>;
 
+    // Handle the submit button click event (navigating to the dashboard)
+    const handleSubmitContest = () => {
+        if (window.confirm("Are you sure you want to submit the entire contest? This action cannot be undone.")) {
+            navigate('/dashboard'); // Navigating to the dashboard route
+        }
+    };
+
     return (
         <div className="contest-view-layout">
-            {/* Submit Contest Button */}
-            <button className="submit-contest-button" onClick={handleSubmitContest}>
-                Submit Contest
-            </button>
-
             <div className="contest-sidebar">
                 <div className="contest-header">
                     <h2>{contest.title}</h2>
-                    <div className="timer">{timeLeft}</div>
+                    <div className="timer">{timeLeft || 'Calculating...'}</div>
                 </div>
                 <div className="problem-list">
                     <h4>Problems</h4>
@@ -118,10 +131,19 @@ const ContestView = () => {
                         ))}
                     </ul>
                 </div>
+                <button
+                    className="submit-contest-button"
+                    onClick={handleSubmitContest}
+                >
+                    Submit Contest
+                </button>
             </div>
-            <div className="contest-main">{renderExamComponent()}</div>
+            <div className="contest-main">
+                {renderExamComponent()}
+            </div>
         </div>
     );
 };
 
 export default ContestView;
+
