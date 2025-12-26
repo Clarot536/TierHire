@@ -77,6 +77,7 @@ const DomainDash = () => {
                     throw new Error(errorData.message || "Failed to fetch leaderboard");
                 }
                 const result = await response.json();
+                console.log(result.data)
                 setLeaderboard(result.data);
             } catch (err) {
                 // Don't set the main error for a failed leaderboard, just log it
@@ -111,7 +112,6 @@ const DomainDash = () => {
 
             // Update applied jobs in the state after successful application
             const result = await response.json();
-            console.log(result);
             setAppliedJobs((prevAppliedJobs) => [
                 ...prevAppliedJobs,
                 // Ensure the added job has a job_id for the conditional check to work immediately
@@ -183,18 +183,65 @@ const DomainDash = () => {
                         <div className="section-header">
                             <h3>Domain Leaderboard</h3>
                         </div>
-                        <ul className="leaderboard-list">
-                            <li>
-                                <span className="rank">#1                 </span>
-                                <span className="name">adi123                 </span>
-                                <span className="score">1220 pts</span>
-                            </li>
-                            <li>
-                                <span className="rank">#2                 </span>
-                                <span className="name">ddy665                 </span>
-                                <span className="score">1200 pts</span>
-                            </li>
-                        </ul>
+                        <ul
+  className="leaderboard-list"
+  style={{
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+    fontFamily: "sans-serif",
+    maxWidth: "400px",
+    border: "1px solid #eee",
+    borderRadius: "8px",
+    overflow: "hidden",
+  }}
+>
+  {leaderboard.map((entry, index) => (
+    <li
+      key={entry.candidate_id}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        padding: "12px 16px",
+        backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
+      }}
+    >
+      <span
+        className="rank"
+        style={{
+          fontWeight: "bold",
+          color: "#0d6efd",
+          flexBasis: "50px",
+          fontSize: "0.9rem",
+        }}
+      >
+        #{entry.current_rank}
+      </span>
+      <span
+        className="name"
+        style={{
+          fontWeight: "500",
+          color: "#333",
+          flexGrow: 1,
+          padding: "0 1rem",
+        }}
+      >
+        {entry.username || 'Anonymous'}
+      </span>
+      <span
+        className="score"
+        style={{
+          fontWeight: "600",
+          color: "#555",
+          fontFamily: "monospace",
+          fontSize: "0.9rem",
+        }}
+      >
+        {entry.rating} pts
+      </span>
+    </li>
+  ))}
+</ul>
                     </div>
                 </div>
             <div className="dash-main-content">

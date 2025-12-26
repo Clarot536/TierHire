@@ -50,11 +50,6 @@ const Navbar = () => {
 
           {isAuthenticated && (
             <>
-              {/* Notifications */}
-              <button className="navbar-action-btn" title="Notifications">
-                <Bell size={20} />
-                <span className="notification-badge">3</span>
-              </button>
 
               {/* Profile Dropdown */}
               <div className="profile-dropdown">

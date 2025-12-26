@@ -9,7 +9,8 @@ import {
   createCustomExam,
   getRecruiterSubscription,
   upgradeSubscription,
-  postJob
+  postJob,
+  getJobCandidates
 } from "../controllers/recruiter.controller.js";
 
 const router = express.Router();
@@ -31,6 +32,7 @@ router.put("/applications/:applicationId", updateApplicationStatus);
 
 // Candidate search and analytics
 router.get("/candidates", getCandidatesByTier);
+router.get("/jobs/candidates", getJobCandidates);
 router.get("/analytics", getAnonymousAnalytics);
 
 // Custom assessments

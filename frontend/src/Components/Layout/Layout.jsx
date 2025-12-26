@@ -19,7 +19,7 @@ const Layout = () => {
     location.pathname.startsWith('/exam') ||
     location.pathname.startsWith('/problems') ||
     location.pathname.startsWith('/profile') ||
-    location.pathname.startsWith('/recruiter/dashboard')
+    location.pathname.startsWith('/recruiter')
   );
 
   return (

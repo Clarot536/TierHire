@@ -225,6 +225,60 @@ const upgradeSubscription = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, subscription, "Subscription upgraded successfully"));
 });
 
+export const getJobCandidates =  asyncHandler(async (req, res) => {
+    const recruiterId = req.user.id;
+
+    // 1. Get all jobs posted by this recruiter
+    const jobsQuery = `
+        SELECT job_id, title, domain_id, target_tier_id, is_active, posted_at
+        FROM "Jobs"
+        WHERE recruiter_id = $1
+        ORDER BY posted_at DESC;
+    `;
+    const jobsResult = await query(jobsQuery, [recruiterId]);
+    const jobs = jobsResult.rows;
+
+    // 2. For each job, fetch its list of applicants
+    const applicantFetchPromises = jobs.map(job => {
+        const applicantsQuery = `
+            SELECT
+                c.id,
+                c."fullName" AS name,
+                c.rating,
+                c.skills,
+                c.experience,
+                c.education,
+                c.projects,
+                (
+                    SELECT d.domain_name 
+                    FROM "Domains" d
+                    JOIN "Candidate_Domain_Performance" cdp ON d.domain_id = cdp.domain_id
+                    WHERE cdp.candidate_id = c.id ORDER BY cdp.total_score DESC LIMIT 1
+                ) AS "domainId",
+                (
+                    SELECT t.tier_name 
+                    FROM "Tiers" t
+                    JOIN "Candidate_Domain_Performance" cdp ON t.tier_id = cdp.tier_id
+                    WHERE cdp.candidate_id = c.id ORDER BY cdp.total_score DESC LIMIT 1
+                ) AS "tierId"
+            FROM "Candidates" c
+            JOIN "Job_Applications" ja ON c.id = ja.candidate_id
+            WHERE ja.job_id = $1;
+        `;
+        return query(applicantsQuery, [job.job_id]);
+    });
+
+    const applicantResults = await Promise.all(applicantFetchPromises);
+
+    // 3. Combine the jobs with their respective applicant lists
+    const jobsWithApplicants = jobs.map((job, index) => ({
+        ...job,
+        candidates: applicantResults[index].rows
+    }));
+
+    return res.status(200).json(new ApiResponse(200, jobsWithApplicants, "Jobs with applicants fetched successfully."));
+});
+
 // Export all the controller functions
 export {
     getRecruiterDashboard,

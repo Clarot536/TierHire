@@ -47,8 +47,8 @@ const RecruiterDashboard = () => {
             setDashboardData(result.data);
 
             // Mock data - replace with API call if needed
-            setDomains([{ domain_id: 1, domain_name: 'Frontend' }, { domain_id: 2, domain_name: 'Backend' }]);
-            setTiers([{ tier_id: 3, tier_name: 'Silver' }, { tier_id: 4, tier_name: 'Gold' }]);
+            setDomains([{ domain_id: 1, domain_name: 'Frontend' }, { domain_id: 2, domain_name: 'Backend' }, { domain_id: 3, domain_name: 'Data Analyst' }, { domain_id: 4, domain_name: 'ML' }]);
+            setTiers([{ tier_id: 1, tier_name: 'Platinum' }, { tier_id: 2, tier_name: 'Gold' }, { tier_id: 3, tier_name: 'Silver' }]);
 
         } catch (err) {
             setError(err.message);
@@ -172,34 +172,6 @@ const RecruiterDashboard = () => {
                                             <td>{job.application_count}</td>
                                             <td>{new Date(job.posted_at).toLocaleDateString()}</td>
                                             <td><Link to={`/recruiter/jobs/${job.job_id}`} className="details-link">View <ArrowRight size={16} /></Link></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div className="dashboard-section">
-                        <div className="section-header">
-                            <h2>Recent Applications</h2>
-                            <Link to="/recruiter/applications" className="section-link">View All</Link>
-                        </div>
-                        <div className="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Candidate Name</th>
-                                        <th>Job Title</th>
-                                        <th>Status</th>
-                                        <th>Applied On</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentApplications.map(app => (
-                                        <tr key={app.application_id}>
-                                            <td>{app.candidate_name}</td>
-                                            <td>{app.job_title}</td>
-                                            <td><span className={`status-badge status-${app.status.toLowerCase()}`}>{app.status}</span></td>
-                                            <td>{new Date(app.applied_at).toLocaleDateString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>

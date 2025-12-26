@@ -71,13 +71,13 @@ const Login = () => {
             </label>
             <div className="input-group">
               <input
-                type="email"
+                type="text"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 className="form-input"
-                placeholder="Enter your email"
+                placeholder="Enter your username/email"
                 required
               />
             </div>

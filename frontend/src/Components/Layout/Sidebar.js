@@ -37,7 +37,6 @@ const Sidebar = () => {
   const recruiterMenuItems = [
     { path: '/recruiter/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/recruiter/candidates', icon: Users, label: 'Candidates' },
-    { path: '/recruiter/jobs', icon: Briefcase, label: 'Jobs' },
   ];
 
   const menuItems = user?.role === 'RECRUITER' ? recruiterMenuItems : candidateMenuItems;

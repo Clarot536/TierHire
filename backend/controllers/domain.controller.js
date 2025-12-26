@@ -174,22 +174,70 @@ const getDomainsById = asyncHandler(async (req, res) => {
 });
 export const getDomainLeaderboard = asyncHandler(async (req, res) => {
     const { domainId } = req.params;
+        const updateQuery = `
+            WITH NewRanks AS (
+                SELECT
+                    candidate_id,
+                    RANK() OVER (
+                        ORDER BY rating DESC, last_active DESC
+                    ) as new_rank
+                FROM
+                    "Candidate_Domain_Performance"
+                WHERE
+                    domain_id = $1
+            ),
+            NewTiers AS (
+                SELECT
+                    nr.candidate_id,
+                    nr.new_rank,
+                    CASE
+                        WHEN nr.new_rank <= 10 THEN 1  -- Top 10
+                        WHEN nr.new_rank > 10 AND nr.new_rank <= 20 THEN 2 -- Next 10
+                        ELSE 3  -- Everyone else
+                    END as new_tier_level
+                FROM
+                    NewRanks nr
+            ),
+
+            TierIdMapping AS (
+                SELECT
+                    nt.candidate_id,
+                    nt.new_rank,
+                    t.tier_id as new_tier_id
+                FROM
+                    NewTiers nt
+                JOIN "Tiers" t ON t.domain_id = $1 AND t.tier_level = nt.new_tier_level
+            )
+            
+            UPDATE
+                "Candidate_Domain_Performance" cdp
+            SET
+                current_rank = tim.new_rank,
+                tier_id = tim.new_tier_id,
+                tier_assigned_date = NOW(), -- Update the date of the tier assignment
+                updated_at = NOW()
+            FROM
+                TierIdMapping tim
+            WHERE
+                cdp.candidate_id = tim.candidate_id AND cdp.domain_id = $1;
+        `;
+
+        try {
+            await query(updateQuery, [domainId]);
 
     const leaderboardQuery = `
         SELECT
             cdp.candidate_id,
             cdp.current_rank,
-            cdp.total_score,
-            c."fullName"
+            cdp.rating,
+            c."username"
         FROM "Candidate_Domain_Performance" cdp
         -- Join with Candidates table on the candidate's primary key (id)
         JOIN "Candidates" c ON cdp.candidate_id = c.id
         WHERE cdp.domain_id = $1
-        ORDER BY cdp.current_rank ASC, cdp.total_score DESC
+        ORDER BY cdp.current_rank ASC, cdp.rating DESC
         LIMIT 100; -- Limit to the top 100 for performance
     `;
-    
-    try {
         const result = await query(leaderboardQuery, [domainId]);
         return res.status(200).json(new ApiResponse(200, result.rows, "Leaderboard fetched successfully."));
     } catch (error) {

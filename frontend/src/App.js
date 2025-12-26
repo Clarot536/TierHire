@@ -28,7 +28,8 @@ import CreateEvent from './Exam/AdminAcess';
 import ContestLobby from './Contests/ContestLobby';
 import ContestView from './Contests/ContestView';
 import AdminLogin from './Pages/Auth/AdminLogin';
-import PastPerformance from './Pages/Dashboard/PastPerformance';
+import PastPerformance from './Pages/Dashboard/PastPerformance'
+import RecCandidates from './Pages/Recruiter/RecCandidates';
 
 import './App.css';
 
@@ -61,13 +62,12 @@ function App() {
                 <Route path="/problems" element={<ProblemLobby />} />
                 <Route path="/problem/:problemId" element={<ProblemView />} />
                 <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+                <Route path="/recruiter/candidates" element={<RecCandidates />} />
                 <Route path="/profile" element={<UpdateDashboard />} />
                 <Route path="/CodeRunner" element={<Coderunner/>}/>
                 <Route path="/exams" element={<ExamLobby/>}/>
-              <Route path="/exam/:problemId" element={<ExamView/>}/>
+                <Route path="/exam/:problemId" element={<ExamView/>}/>
               </Route>
-
-              {/* Catch-all route to redirect unknown paths */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
