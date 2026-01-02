@@ -3,7 +3,6 @@ import api from '../utils/api'; // Your Axios instance
 
 const AuthContext = createContext();
 
-// Custom hook for using AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -14,9 +13,8 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [domains, setDomains] = useState(null);
 
-  // Register user
   const register = async (userData) => {
     try {
       const response = await api.post('/api/users/register', userData);
@@ -29,24 +27,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login user
-  const login = async (credentials) => {
+const login = async (credentials) => {
     try {
       let response = await api.post('/api/users/login', credentials);
-      response = response.data;
+      response = await response.data;
       if (response.success) {
-        setUser(response.data); // Update user state after login
-        setIsAuthenticated(true);
+        setUser(response.data.user);
         return { success: true, user: response.data };
       }
       return { success: false, message: response.message || 'Login failed' };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Login failed' };
+      console.log(error);
+      return { success: false, message: error.response?.data?.message || 'Login failed - fatal' };
     }
   };
 
  const logout = async () => {
   try {
+    console.log("LOGGG OUTTTT")
     await api.post('/api/users/logout',  {}, {
       withCredentials: true
     });
@@ -54,13 +52,13 @@ export const AuthProvider = ({ children }) => {
     console.log('Logout error:', error);
   } finally {
     setUser(null);
-    setIsAuthenticated(false);
+    setDomains(null);
   }
 };
 
   const value = {
     user,
-    isAuthenticated,
+    domains,
     login,
     logout,
     register

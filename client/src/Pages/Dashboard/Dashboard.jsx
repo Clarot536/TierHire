@@ -73,6 +73,7 @@ const Dashboard = () => {
     try {
       setDomainsLoading(true);
       const response = await fetch('/api/domains/domains');
+      console.log(response);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -182,7 +183,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ✅ --- NEW: Selected Domains Section --- */}
       <div className="dashboard-section">
         <div className="section-header">
           <h2 className="section-title" style={{color : 'red'}}>Selected Domains</h2>
@@ -191,7 +191,6 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Conditional Rendering for loading, error, and data states */}
         {domainsLoading && <p>Loading your domains...</p>}
         
         {domainsError && <p className="error-text">Error: {domainsError}</p>}

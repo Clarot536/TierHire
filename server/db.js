@@ -44,7 +44,7 @@ const generateAccessToken = (user) => {
       role: user.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1m" }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY}
   );
 };
 
@@ -193,14 +193,9 @@ const login = async (credential, password) => {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
-        cvUrl
+        cvUrl,
       };
-    return {
-      success: true,
-      user: userobj,
-      accessToken,
-      refreshToken,
-    };
+    return {userobj, accessToken, refreshToken};
   } catch (err) {
     console.error("Login Error:", err);
     throw new ApiError(err.statusCode || 500, err.message || "Login failed");

@@ -8,13 +8,14 @@ import './Auth.css';
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    role : 'CANDIDATE'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
 
@@ -33,9 +34,8 @@ const Login = () => {
     try {
       const formData1 = {...formData, role : "CANDIDATE"}
       const result = await login(formData1);
-      console.log("result ", result.user.user.cvUrl);
       if (result.success){
-        if(result.user.user.cvUrl!=null)
+        if(user.cvUrl!=null)
           navigate('/dashboard')
         else
           navigate('/updatedashboard');

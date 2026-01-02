@@ -30,6 +30,7 @@ import ContestView from './Contests/ContestView';
 import AdminLogin from './Pages/Auth/AdminLogin';
 import PastPerformance from './Pages/Dashboard/PastPerformance'
 import RecCandidates from './Pages/Recruiter/RecCandidates';
+import ProtectedRoute from './Pages/Auth/ProtectedRoute';
 
 import './App.css';
 
@@ -40,17 +41,15 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-              <Route path="/admin" element={<CreateEvent />} />
-              <Route path="/adminlogin" element={<AdminLogin />} />
-              <Route path="/contests" element={<ContestLobby />} />
-              <Route path="/pastperformance" element={<PastPerformance />} />
-              <Route path="/contest/:contestId" element={<ContestView />} />
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/recruiter/login" element={<RecruiterLogin />} />
               <Route path="/recruiter/register" element={<RecruiterRegister />} />
+              <Route path="/adminlogin" element={<AdminLogin />} />
 
+            <Route element={<ProtectedRoute/>}>
+              <Route path="/admin" element={<CreateEvent />} />
               <Route element={<Layout />}>
                 <Route path="/updatedashboard" element={<UpdateDashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -61,10 +60,14 @@ function App() {
                 <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
                 <Route path="/recruiter/candidates" element={<RecCandidates />} />
                 <Route path="/profile" element={<UpdateDashboard />} />
+                <Route path="/pastperformance" element={<PastPerformance />} />
+                <Route path="/contest/:contestId" element={<ContestView />} />
+                <Route path="/contests" element={<ContestLobby />} />
                 <Route path="/CodeRunner" element={<Coderunner/>}/>
                 <Route path="/exams" element={<ExamLobby/>}/>
                 <Route path="/exam/:problemId" element={<ExamView/>}/>
               </Route>
+            </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

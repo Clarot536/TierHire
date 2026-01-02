@@ -153,7 +153,6 @@ export const getContests = asyncHandler(async (req, res) => {
 export const sortAfterContest = asyncHandler(async (req, res)=> {
   try {
     const contest_id = req.params.contestId;
-    console.log(contest_id)
     // 1. Get contest domain_id
     const { rows: contestRows } = await query(
       `SELECT domain_id FROM "Contests" WHERE contest_id = $1`,
@@ -230,7 +229,6 @@ export const sortAfterContest = asyncHandler(async (req, res)=> {
     [rank, candidate_id, contestDomainId])
 
       // Update rank in Contest_Participations for this candidate and contest
-      console.log("Hi")
       await query(
         `UPDATE "Contest_Participations"
          SET rank = $1

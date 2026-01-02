@@ -28,7 +28,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser) {
         throw new ApiError(400, "Something Went Wrong While creating a user")
     }
-    console.log(createdUser);
     return res
         .status(200)
         .json(
@@ -40,42 +39,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const logInUser = asyncHandler(async (req, res) => {
 
-    const { email, password,role } = req.body
-    const existedUser = await login(email, password);
-   
-    if (!existedUser?.user.id) {
+    const { email, password } = req.body
+    const {userobj, accessToken, refreshToken} = await login(email, password);
+    if (!userobj?.id) {
         console.log("User not created")
         throw new ApiError(400, "User doesnot  exisits")
-
-    }
-    const accessToken=existedUser?.accessToken
-    const refreshToken=existedUser?.refreshToken
-
-    //resume uploading process
-    // const localResumePath = req.files?.resume[0]?.path;
-    // const resumeUploaded = await uploadOnCloudinary(localResumePath)
-
-    //  if (!resumeUploaded) {
-    //     throw new ApiError(400, "Need resume  file")
-    // }
-    // const resumeUploadStatus=await uploadResume(resumeUploaded,existedUser?.user.id,role);
-    let LoggedInUser=null
-    if(role==="CANDIDATE"){
-        LoggedInUser = await getUserById(existedUser.user.id);
-    }else if(role==="RECRUITER"){
-         LoggedInUser = await getRecruiterById(existedUser.user.id);
     }
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken)
+        .cookie("refreshToken", refreshToken)
         .json(new ApiResponse(200, {
-            user: LoggedInUser,
+            user: userobj,
             refreshToken, accessToken
         }, "User Logged In Successfully"))
 
@@ -154,7 +130,6 @@ const checkusername = asyncHandler(async (req, res) => {
 const logOutUser = asyncHandler(async (req, res) => {
     const userId=req.user.id
     const UpdateUser=await updateRefreshToken(userId,'CANDIDATE',null)
-    console.log("Cleared RT", UpdateUser);
     const options={
         httpOnly:true,
         secure:true

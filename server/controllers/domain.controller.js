@@ -32,6 +32,8 @@ const getDomains = asyncHandler(async (req, res) => {
  */
 const getCandidateDomains = asyncHandler(async (req, res) => {
     const candidateId = req.user?.id;
+    
+
 
     if (!candidateId || req.user.role !== 'CANDIDATE') {
         throw new ApiError(401, "User not authenticated or is not a candidate.");
@@ -40,25 +42,16 @@ const getCandidateDomains = asyncHandler(async (req, res) => {
     try {
         const sql = `
           SELECT 
-            d.domain_id AS "domainId",
-            d.domain_name AS "domainName",
-            d.description,
-            t.tier_id AS "tierId",
-            t.tier_name AS "tierName",
-            t.tier_level AS "tierLevel",
-            cdp.current_rank AS "rank",
-            cdp.total_score AS "totalScore",
-            cdp.participation_count AS "participationCount",
-            cdp.status
+            *
           FROM "Candidate_Domain_Performance" cdp
-          JOIN "Domains" d ON cdp.domain_id = d.domain_id
-          JOIN "Tiers" t ON cdp.tier_id = t.tier_id
+             LEFT JOIN "Domains" d ON cdp.domain_id = d.domain_id
+            LEFT JOIN "Tiers" t ON cdp.tier_id = t.tier_id
+
           WHERE cdp.candidate_id = $1
           ORDER BY d.domain_name ASC;
         `;
 
         const result = await query(sql, [candidateId]);
-        console.log(result, result.rows)
         return res.status(200).json(
             new ApiResponse(200, result.rows, "Candidate domains and performance fetched successfully")
         );
